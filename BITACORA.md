@@ -14,7 +14,7 @@
 | **Inicio** | 2026-08-30 |
 | **Stack** | React + Vite + TypeScript en el frontend; **Firebase** (Firestore + Auth + Hosting) en el backend |
 | **Local** | `OneDrive/0 PROGRA/23 TURNOS` |
-| **Repo** | (pendiente crear en GitHub — Maah1996) |
+| **Repo** | `Maah1996/control-turnos` (privado) — https://github.com/Maah1996/control-turnos |
 | **Deploy** | Firebase Hosting (pendiente crear proyecto Firebase) |
 | **Zona horaria** | `America/Santiago` (considerar cambio de hora / DST en cálculos) |
 
@@ -130,8 +130,9 @@ Leyenda: `[ ]` pendiente · `[~]` en curso · `[x]` terminado y confirmado en vi
 `src/components/CalendarGrid.tsx`, `src/App.tsx` (reescrito), `src/App.css` (reescrito),
 `src/index.css` (reescrito), `index.html` (título + `lang=es-CL`), `.claude/launch.json`.
 
-**Commits:** commit inicial local (rama `main`). **Repo GitHub: PENDIENTE** — falta que el
-usuario confirme nombre (propuesta: `Maah1996/control-turnos`) para crear y hacer el primer push.
+**Commits:** `7e0265c` — push inicial a `Maah1996/control-turnos` (privado), rama `main`.
+Remote guardado sin token en la URL. Token válido: el 1º de `preferencias_usuario.md`
+(`ghp_RA2kf8...KeHnF`); el del "Flujo de subida" / autopush está obsoleto.
 
 **Pendiente para la sesión 2:** ver "▶ PARA RETOMAR".
 
