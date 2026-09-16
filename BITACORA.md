@@ -385,6 +385,28 @@ trabajadores). Implementado como una capa de **visualización**, sin tocar los t
 **Archivos modificados (ajuste 7):** `src/App.tsx`, `src/components/CalendarGrid.tsx`,
 `src/App.css`.
 
+**Ajuste 8 — mismo día: pantalla "Trabajadores" (faltaba la contraparte de "Secciones").**
+El usuario preguntó dónde estaba "la base de datos con los nombres" — hasta ese punto no
+había una pantalla que listara a TODOS los trabajadores (solo se veían dentro del calendario,
+ya filtrados por Alcance/estado activo). Se aclaró que quería una pantalla propia, igual al
+patrón ya usado en "Secciones", y se construyó:
+- `src/components/WorkerManager.tsx` (nuevo): lista completa de trabajadores — activos e
+  inactivos, sin importar el filtro Alcance — ordenados alfabéticamente, con cargo, sección y
+  su estado (si no es "Activo") visibles. Botón "+ Nuevo trabajador" arriba; "Editar"/
+  "Eliminar" por fila (reutilizan el `WorkerForm` y el `ConfirmDialog` que ya existían).
+- Botón **"Trabajadores"** nuevo en la barra superior, junto a "Secciones".
+- Al Editar/Eliminar/Crear desde esta pantalla, el modal "Trabajadores" se cierra primero y
+  luego se abre el formulario correspondiente (mismo criterio que ya se usaba para evitar
+  modales anidados) — no vuelve a abrirse solo; si se quiere seguir editando a otro, hay que
+  volver a abrir "Trabajadores" con el botón. Se documenta como decisión de alcance, no como
+  limitación técnica.
+- Verificado en vivo: abrir "Trabajadores" → se ven los 5 de ejemplo con su cargo/sección →
+  "Editar" en uno → cierra la lista y abre "Editar trabajador" correctamente (sin modales
+  apilados) → Cancelar. `tsc -b` sin errores, sin errores de consola.
+
+**Archivos nuevos (ajuste 8):** `src/components/WorkerManager.tsx`.
+**Archivos modificados (ajuste 8):** `src/App.tsx`, `src/App.css`.
+
 ---
 ---
 

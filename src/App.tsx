@@ -11,6 +11,7 @@ import { Modal } from './components/Modal';
 import { WorkerForm } from './components/WorkerForm';
 import { ShiftForm } from './components/ShiftForm';
 import { AreaManager } from './components/AreaManager';
+import { WorkerManager } from './components/WorkerManager';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { EMPRESA, SHIFT_TYPES, WORKERS, buildMockShifts } from './data/mock';
 
@@ -39,6 +40,7 @@ export default function App() {
   const [workerModal, setWorkerModal] = useState<WorkerModalState>(null);
   const [shiftModal, setShiftModal] = useState<ShiftModalState>(null);
   const [areaManagerOpen, setAreaManagerOpen] = useState(false);
+  const [workerManagerOpen, setWorkerManagerOpen] = useState(false);
   const [confirmDeleteWorkerId, setConfirmDeleteWorkerId] = useState<string | null>(null);
   // Permite reemplazar, fila por fila, a qué trabajador de la base se está mirando —
   // sin tocar los turnos reales de nadie. Se reinicia si cambia el filtro de Alcance,
@@ -222,6 +224,7 @@ export default function App() {
           </div>
 
           <button className="ghost" onClick={() => setAreaManagerOpen(true)}>Secciones</button>
+          <button className="ghost" onClick={() => setWorkerManagerOpen(true)}>Trabajadores</button>
           <button className="primary" onClick={() => setWorkerModal({ mode: 'new' })}>+ Trabajador</button>
           <button className="ghost" onClick={() => window.print()}>Imprimir</button>
         </div>
@@ -279,6 +282,18 @@ export default function App() {
               ? () => { const id = workerModal.worker.id; setWorkerModal(null); deleteWorker(id); }
               : undefined}
             onClose={() => setWorkerModal(null)}
+          />
+        </Modal>
+      )}
+
+      {workerManagerOpen && (
+        <Modal title="Trabajadores" onClose={() => setWorkerManagerOpen(false)}>
+          <WorkerManager
+            workers={workers}
+            onNew={() => { setWorkerManagerOpen(false); setWorkerModal({ mode: 'new' }); }}
+            onEdit={(worker) => { setWorkerManagerOpen(false); setWorkerModal({ mode: 'edit', worker }); }}
+            onDelete={(id) => { setWorkerManagerOpen(false); deleteWorker(id); }}
+            onClose={() => setWorkerManagerOpen(false)}
           />
         </Modal>
       )}
