@@ -132,6 +132,9 @@ body {
 .primary:active { transform: translateY(0); box-shadow: var(--shadow-1); }
 .primary:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
 
+.primary.danger { background: var(--color-destructive); }
+.primary.danger:hover { background: color-mix(in srgb, var(--color-destructive) 85%, black); }
+
 .danger-ghost {
   border: 0; background: transparent; border-radius: var(--radius-sm);
   padding: 10px 14px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--color-destructive);

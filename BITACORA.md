@@ -332,6 +332,28 @@ pasada). No se cambió ninguna lógica de negocio, cálculo, filtro ni el modelo
 **Archivos modificados (ajuste 5):** `src/App.css`, `src/components/Modal.tsx`,
 `src/components/CalendarGrid.tsx`, `src/components/AreaManager.tsx`.
 
+**Ajuste 6 — mismo día: bug real — "Eliminar" no hacía nada en el link publicado.**
+El usuario reportó que el botón de eliminar trabajador (papelera por fila) no tenía efecto
+al probarlo en el link de Artifact. Causa: ese link corre dentro de un iframe de claude.ai,
+y los navegadores bloquean `window.confirm()` ahí (vuelve a `false` sin mostrar nada) —
+`deleteWorker` dependía de ese diálogo nativo, así que abortaba en silencio. Se reemplazó por
+un diálogo de confirmación propio:
+- `src/components/ConfirmDialog.tsx` (nuevo): reutiliza `Modal`, con botón "Eliminar" en rojo
+  (`.primary.danger`, nuevo en `App.css`).
+- `App.tsx`: `deleteWorker(id)` ahora solo abre el diálogo (`confirmDeleteWorkerId`);
+  `confirmDeleteWorker()` hace el borrado real (trabajador + sus turnos) al confirmar.
+- Para evitar modales anidados (y que `Escape` cerrara dos modales a la vez), cuando se
+  elimina desde dentro de "Editar trabajador", ese modal se cierra primero y luego se abre
+  la confirmación — en vez de apilar uno sobre otro.
+- Verificado en vivo: eliminar por el ícono de fila → confirma con el nombre correcto → borra
+  al trabajador y sus turnos; "Cancelar" no borra nada; eliminar desde dentro de "Editar
+  trabajador" también funciona. `tsc -b` sin errores, sin errores de consola.
+- Esto también resuelve, de paso, la recomendación pendiente del ajuste 5 de reemplazar
+  `window.confirm`/`alert` nativos — ya no queda ningún `window.confirm` en el código.
+
+**Archivos nuevos (ajuste 6):** `src/components/ConfirmDialog.tsx`.
+**Archivos modificados (ajuste 6):** `src/App.tsx`, `src/App.css`.
+
 ---
 ---
 

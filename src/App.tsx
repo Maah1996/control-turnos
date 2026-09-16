@@ -11,6 +11,7 @@ import { Modal } from './components/Modal';
 import { WorkerForm } from './components/WorkerForm';
 import { ShiftForm } from './components/ShiftForm';
 import { AreaManager } from './components/AreaManager';
+import { ConfirmDialog } from './components/ConfirmDialog';
 import { EMPRESA, SHIFT_TYPES, WORKERS, buildMockShifts } from './data/mock';
 
 const HOY = new Date();
@@ -38,6 +39,7 @@ export default function App() {
   const [workerModal, setWorkerModal] = useState<WorkerModalState>(null);
   const [shiftModal, setShiftModal] = useState<ShiftModalState>(null);
   const [areaManagerOpen, setAreaManagerOpen] = useState(false);
+  const [confirmDeleteWorkerId, setConfirmDeleteWorkerId] = useState<string | null>(null);
 
   useEffect(() => saveJSON(STORAGE_KEYS.workers, workers), [workers]);
   useEffect(() => saveJSON(STORAGE_KEYS.shifts, shifts), [shifts]);
@@ -97,11 +99,15 @@ export default function App() {
     setWorkerModal(null);
   };
 
-  const deleteWorker = (id: string) => {
-    if (!window.confirm('¿Eliminar este trabajador? También se quitarán sus turnos asignados.')) return;
+  const deleteWorker = (id: string) => setConfirmDeleteWorkerId(id);
+
+  const confirmDeleteWorker = () => {
+    if (!confirmDeleteWorkerId) return;
+    const id = confirmDeleteWorkerId;
     setWorkers((prev) => prev.filter((w) => w.id !== id));
     setShifts((prev) => prev.filter((s) => s.workerId !== id));
     setWorkerModal(null);
+    setConfirmDeleteWorkerId(null);
   };
 
   const saveShift = (data: Pick<ScheduledShift, 'shiftTypeId' | 'start' | 'end' | 'breakMinutes' | 'notes'>) => {
@@ -246,7 +252,9 @@ export default function App() {
             initial={workerModal.mode === 'edit' ? workerModal.worker : undefined}
             areas={areas}
             onSave={saveWorker}
-            onDelete={workerModal.mode === 'edit' ? () => deleteWorker(workerModal.worker.id) : undefined}
+            onDelete={workerModal.mode === 'edit'
+              ? () => { const id = workerModal.worker.id; setWorkerModal(null); deleteWorker(id); }
+              : undefined}
             onClose={() => setWorkerModal(null)}
           />
         </Modal>
@@ -280,6 +288,15 @@ export default function App() {
             onClose={() => setShiftModal(null)}
           />
         </Modal>
+      )}
+
+      {confirmDeleteWorkerId && (
+        <ConfirmDialog
+          title="Eliminar trabajador"
+          message={`¿Eliminar a ${workers.find((w) => w.id === confirmDeleteWorkerId)?.fullName ?? 'este trabajador'}? También se quitarán sus turnos asignados.`}
+          onConfirm={confirmDeleteWorker}
+          onCancel={() => setConfirmDeleteWorkerId(null)}
+        />
       )}
     </div>
   );
