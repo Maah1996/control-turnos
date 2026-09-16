@@ -203,13 +203,24 @@ body {
 }
 .worker .swatch { width: 6px; align-self: stretch; border-radius: var(--radius-pill); flex: none; min-height: 34px; }
 .worker .wname {
-  display: flex; flex-direction: column; text-align: left; border: 0; background: transparent;
+  display: flex; flex-direction: column; flex: 1; min-width: 0; text-align: left; border: 0; background: transparent;
   padding: 2px 4px; margin: -2px -4px; cursor: pointer; font-family: inherit; border-radius: var(--radius-sm);
   transition: background var(--transition);
 }
 .worker .wname:hover { background: var(--color-card); box-shadow: var(--shadow-1); }
 .worker .wname:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 1px; }
 .worker .wname strong { font-size: 13px; font-weight: 600; line-height: 1.25; color: var(--color-foreground); }
+
+.worker-delete {
+  flex: none; align-self: center; width: 28px; height: 28px; border: 0; background: transparent;
+  border-radius: 50%; color: var(--color-muted-foreground); cursor: pointer; display: grid; place-items: center;
+  opacity: 0; transition: opacity var(--transition), background var(--transition), color var(--transition);
+}
+.worker-delete svg { width: 16px; height: 16px; }
+.grid tbody tr:hover .worker-delete,
+.worker-delete:focus-visible { opacity: 1; }
+.worker-delete:hover { background: color-mix(in srgb, var(--color-destructive) 10%, transparent); color: var(--color-destructive); }
+.worker-delete:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 1px; }
 .worker .wname small { color: var(--color-muted-foreground); font-size: 11px; }
 
 .grid td.cell { padding: 6px; height: 64px; cursor: pointer; }
@@ -326,4 +337,5 @@ body {
   .grid td.cell { height: auto; }
   .grid td.cell.empty::after { content: ''; }
   .chip { border-left-width: 3px; }
+  .worker-delete { display: none; }
 }

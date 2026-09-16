@@ -228,6 +228,7 @@ export default function App() {
             const w = workers.find((x) => x.id === workerId);
             if (w) setWorkerModal({ mode: 'edit', worker: w });
           }}
+          onDeleteWorker={deleteWorker}
         />
 
         <footer className="sheet-foot">

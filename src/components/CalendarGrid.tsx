@@ -12,10 +12,11 @@ interface Props {
   onCellClick?: (workerId: string, iso: string) => void;
   onShiftClick?: (shift: ScheduledShift) => void;
   onWorkerClick?: (workerId: string) => void;
+  onDeleteWorker?: (workerId: string) => void;
 }
 
 export function CalendarGrid({
-  days, workers, shifts, shiftTypes, today, onCellClick, onShiftClick, onWorkerClick,
+  days, workers, shifts, shiftTypes, today, onCellClick, onShiftClick, onWorkerClick, onDeleteWorker,
 }: Props) {
   const typeById = new Map(shiftTypes.map((t) => [t.id, t]));
 
@@ -63,6 +64,18 @@ export function CalendarGrid({
                 >
                   <strong>{w.fullName}</strong>
                   <small>{w.position} · {w.area}</small>
+                </button>
+                <button
+                  type="button"
+                  className="worker-delete"
+                  onClick={(e) => { e.stopPropagation(); onDeleteWorker?.(w.id); }}
+                  title="Eliminar trabajador"
+                  aria-label={`Eliminar a ${w.fullName}`}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2m2 0-.8 12.1A2 2 0 0 1 16.2 21H7.8a2 2 0 0 1-2-1.9L5 7h14Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                  </svg>
                 </button>
               </th>
               {days.map((d) => {

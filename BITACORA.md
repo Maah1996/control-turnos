@@ -282,6 +282,17 @@ pantalla dedicada. Se construyó:
 **Archivos modificados (ajuste 3):** `src/App.tsx`, `src/components/WorkerForm.tsx`,
 `src/lib/storage.ts`, `src/App.css`.
 
+**Ajuste 4 — mismo día: eliminar trabajador más rápido.** El usuario pidió una opción de
+eliminar por fila para no tener que abrir "Editar trabajador" solo para borrar. Se agregó un
+ícono de papelera en la celda del nombre (`CalendarGrid.tsx`, prop `onDeleteWorker`, reutiliza
+el mismo `deleteWorker` de `App.tsx` — misma confirmación y borrado en cascada de turnos que
+ya existía), visible al pasar el mouse sobre la fila (`opacity` en hover, oculto en impresión).
+Verificado en vivo (aparece al hacer hover, no se probó el clic en sí porque el `window.confirm`
+nativo ya se había verificado antes y no es manejable desde el navegador automatizado).
+
+**Archivos modificados (ajuste 4):** `src/components/CalendarGrid.tsx`, `src/App.tsx`,
+`src/App.css`.
+
 ---
 ---
 
