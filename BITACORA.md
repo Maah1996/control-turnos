@@ -35,17 +35,23 @@ El prompt maestro pedía **React + Vite + Supabase**. Se optó por **React + Vit
 ## ▶ PARA RETOMAR (leer esto al iniciar la próxima sesión)
 
 **Estado actual:** proyecto scaffolded (Vite + React + TS). Existe la pantalla de
-**Calendario de Turnos** con datos de ejemplo (mock), vistas semana/mes, filas por
-trabajador y columnas por día. Rediseño visual (paleta/tipografía/estilo) hecho con el
-skill `ui-ux-pro-max` (sesión 2). Sin backend todavía, sin edición todavía.
+**Calendario de Turnos** con datos de ejemplo (mock) como semilla inicial, vistas
+semana/quincena/mes, filas por trabajador y columnas por día. Rediseño visual (paleta/
+tipografía/estilo, luego ajustado a más profundidad) hecho con el skill `ui-ux-pro-max`
+(sesión 2). **Ya se puede crear/editar trabajadores y asignar/editar/quitar turnos desde
+la pantalla** (sesión 2, ajuste 2) — persistido en `localStorage` del navegador. Sin
+backend todavía (sin Firebase, sin multiusuario, sin auditoría).
 
 **Siguiente sesión — hacer, en orden:**
-1. ~~Revisar en vivo la grilla del calendario y confirmar diseño/legibilidad del "mural".~~
-   Rediseño visual verificado en vivo (semana y mes) — falta confirmación explícita del usuario.
-2. Edición **individual** de celda (panel lateral: turno, hora inicio/término, colación, notas).
-3. Estado **borrador** en memoria + botón Guardar con resumen de cambios (aún sin Firebase).
-4. Selector de rango quincena + rango personalizado (hoy solo semana y mes).
-5. Recién después: crear proyecto Firebase + repo GitHub + primera subida.
+1. ~~Revisar en vivo la grilla del calendario y confirmar diseño/legibilidad del "mural".~~ Hecho.
+2. ~~Edición individual de celda (panel: turno, hora inicio/término, colación, notas).~~ Hecho
+   — falta el flujo de **borrador + Guardar con resumen** (ahora cada guardado es directo,
+   sin paso intermedio de confirmación de lote).
+3. ABM de trabajadores: falta edición **masiva** (seleccionar varias filas y cambiar en bloque),
+   e importación desde Excel/CSV — hoy solo hay alta/edición/baja individual.
+4. Selector de rango personalizado (hoy: semana / quincena / mes fijos).
+5. Arreglar superposición de chips en vista Mes (columnas muy angostas, `table-layout: fixed`).
+6. Recién después: crear proyecto Firebase + migrar `localStorage` a Firestore + auditoría real.
 6. (Menor, detectado en la sesión 2) En vista **Mes** los chips de turno se amontonan/superponen
    por lo angosto de cada columna de día — no se tocó porque no era parte del pedido de esta
    sesión (rediseño visual); ajustar cuando se retome la grilla.
@@ -66,16 +72,21 @@ skill `ui-ux-pro-max` (sesión 2). Sin backend todavía, sin edición todavía.
 | 2026-08-30 | Carpeta del proyecto: `OneDrive/0 PROGRA/23 TURNOS`. |
 | 2026-08-30 | Se construye por fases; la Fase 1 (planificación + impresión) es el MVP. |
 | 2026-08-30 | El calendario nunca escribe directo: borrador → Guardar → transacción + auditoría. |
+| 2026-09-16 | **Desviación temporal** de la decisión anterior: el ABM de trabajadores/turnos de la sesión 2 escribe directo a `localStorage` al presionar Guardar, sin borrador ni resumen de cambios. Se aceptó así para tener antes una forma real de ingresar datos; el flujo borrador→Guardar→auditoría queda pendiente para cuando exista Firebase (ver "▶ Para retomar"). |
 
 ---
 
 ## ESTADO POR FASES
 
 ### Fase 1 — MVP (planificación e impresión)
-- [ ] ABM empresa, sucursales, áreas, cargos y trabajadores
-- [ ] Tipos de turno y horarios por defecto
-- [~] Calendario de turnos — vistas día/semana/quincena/mes  *(semana y mes con mock)*
-- [ ] Calendario — edición individual (celda por celda)
+- [~] ABM empresa, sucursales, áreas, cargos y trabajadores *(alta/edición/baja individual de
+  trabajador con cargo y sección; falta empresa/sucursales, edición masiva e importación)*
+- [ ] Tipos de turno y horarios por defecto *(existen 3 tipos base fijos AM/PM/Noche; falta
+  pantalla de configuración para crear/editar tipos)*
+- [~] Calendario de turnos — vistas día/semana/quincena/mes  *(semana, quincena y mes; falta día
+  y rango personalizado)*
+- [~] Calendario — edición individual (celda por celda) *(asignar/editar/quitar turno vía panel;
+  falta atajos de teclado Tab/Enter/Supr/Ctrl+C/V y arrastrar para mover/duplicar)*
 - [ ] Calendario — edición masiva (multiselección, aplicar/limpiar/mover/reemplazar)
 - [ ] Copiar semana anterior / rellenar huecos
 - [ ] Plantillas semanales
@@ -199,6 +210,44 @@ tipografía de antes — solo cambió cómo se construye la profundidad/jerarqu�
 como Artifact de Claude para que el usuario lo viera sin depender del dev server local. Se
 republicó en el mismo link al aplicar el ajuste de profundidad. Esto es solo para revisión
 visual — no reemplaza el futuro deploy en Firebase Hosting.
+
+**Ajuste 2 — mismo día: primera función real de datos (ABM básico).** El usuario preguntó
+cómo ingresar nuevos nombres/sección/personal/horarios y se confirmó que hasta este punto
+todo era data de ejemplo fija en `data/mock.ts`, sin forma de editarla desde la pantalla.
+Se construyó:
+- `src/lib/storage.ts`: helpers `loadJSON`/`saveJSON` sobre `localStorage`
+  (`turnos_workers_v1`, `turnos_shifts_v1`), con `try/catch` silencioso si no está disponible.
+- `src/components/Modal.tsx`: modal genérico (scrim + tarjeta, cierre con Esc/click afuera).
+- `src/components/WorkerForm.tsx`: alta/edición de trabajador — nombre, RUT, cargo,
+  **sección/área** (input con `<datalist>` de áreas existentes, pero acepta escribir una
+  nueva), tipo de contrato, horas semanales, estado, color (paleta fija de 8). Incluye
+  "Eliminar trabajador" (con `window.confirm`, borra también sus turnos).
+- `src/components/ShiftForm.tsx`: alta/edición de turno al hacer clic en una celda —
+  tipo de turno (autocompleta horario/colación desde `SHIFT_TYPES`, editable), hora
+  inicio/término, colación, notas. Incluye "Quitar turno" si ya existía uno.
+- `App.tsx`: estado de `workers`/`shifts` ahora vive en React state sembrado una sola vez
+  desde `WORKERS`/`buildMockShifts` y persistido a `localStorage` en cada cambio (dejó de
+  regenerarse turnos mock cada vez que cambia la fecha ancla — ahora los turnos son datos
+  reales del usuario, no una demo recalculada). Botón **"+ Trabajador"** en la barra
+  superior. `areas` del selector "Alcance" ahora se calculan de los trabajadores reales.
+- `CalendarGrid.tsx`: el nombre del trabajador y cada turno (chip) ahora son botones
+  clicables (`onWorkerClick` / `onShiftClick`), con `stopPropagation` en el chip para no
+  disparar también "nuevo turno" de la celda.
+- Verificado en vivo end-to-end: crear trabajador "Ana Soto Pérez" con sección nueva
+  "Recepción" → aparece en la grilla y en el filtro Alcance → asignarle un turno Mañana →
+  editar ese turno → editar los datos del trabajador → persiste tras recargar la página
+  (`localStorage`). `tsc -b` sin errores. Datos de prueba limpiados antes de cerrar
+  (`localStorage.removeItem` vía consola, porque el `window.confirm` nativo de "Eliminar
+  trabajador" no es manejable desde el navegador automatizado de la sesión).
+- **Limitación conocida y aceptada por ahora:** no hay "borrador" ni confirmación de lote —
+  cada Guardar escribe inmediato al estado/`localStorage`. Tampoco hay edición masiva de
+  trabajadores ni importación Excel/CSV (quedó para la próxima sesión, ver "▶ Para retomar").
+  Es de un solo usuario/navegador: no sincroniza entre dispositivos hasta que exista Firebase.
+
+**Archivos nuevos:** `src/lib/storage.ts`, `src/components/Modal.tsx`,
+`src/components/WorkerForm.tsx`, `src/components/ShiftForm.tsx`.
+**Archivos modificados (ajuste 2):** `src/App.tsx`, `src/components/CalendarGrid.tsx`,
+`src/App.css`.
 
 ---
 ---

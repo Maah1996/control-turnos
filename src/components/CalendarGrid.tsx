@@ -10,10 +10,12 @@ interface Props {
   shiftTypes: ShiftType[];
   today: Date;
   onCellClick?: (workerId: string, iso: string) => void;
+  onShiftClick?: (shift: ScheduledShift) => void;
+  onWorkerClick?: (workerId: string) => void;
 }
 
 export function CalendarGrid({
-  days, workers, shifts, shiftTypes, today, onCellClick,
+  days, workers, shifts, shiftTypes, today, onCellClick, onShiftClick, onWorkerClick,
 }: Props) {
   const typeById = new Map(shiftTypes.map((t) => [t.id, t]));
 
@@ -53,10 +55,15 @@ export function CalendarGrid({
             <tr key={w.id}>
               <th className="worker" scope="row">
                 <span className="swatch" style={{ background: w.color }} />
-                <span className="wname">
+                <button
+                  type="button"
+                  className="wname"
+                  onClick={() => onWorkerClick?.(w.id)}
+                  title="Editar trabajador"
+                >
                   <strong>{w.fullName}</strong>
                   <small>{w.position} · {w.area}</small>
-                </span>
+                </button>
               </th>
               {days.map((d) => {
                 const iso = toISO(d);
@@ -76,16 +83,18 @@ export function CalendarGrid({
                       const t = typeById.get(s.shiftTypeId);
                       const mins = minutesBetween(s.start, s.end) - s.breakMinutes;
                       return (
-                        <div
+                        <button
                           key={s.id}
+                          type="button"
                           className="chip"
                           style={{ ['--chip' as string]: t?.color ?? '#888' }}
-                          title={`${t?.name ?? ''} ${s.start}–${s.end} · colación ${s.breakMinutes} min`}
+                          title={`${t?.name ?? ''} ${s.start}–${s.end} · colación ${s.breakMinutes} min — clic para editar`}
+                          onClick={(e) => { e.stopPropagation(); onShiftClick?.(s); }}
                         >
                           <span className="chip-code">{t?.code}</span>
                           <span className="chip-time">{s.start}–{s.end}</span>
                           <span className="chip-net">{fmtHours(mins)}</span>
-                        </div>
+                        </button>
                       );
                     })}
                   </td>

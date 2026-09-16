@@ -1,21 +1,41 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './App.css';
-import type { ViewMode } from './types';
+import type { ScheduledShift, ViewMode, Worker } from './types';
 import {
   addDays, eachDay, endOfMonth, fmtLong, fmtMonthYear,
-  startOfMonth, startOfWeek, toISO,
+  fromISO, startOfMonth, startOfWeek, toISO,
 } from './lib/dates';
+import { loadJSON, saveJSON, STORAGE_KEYS } from './lib/storage';
 import { CalendarGrid } from './components/CalendarGrid';
+import { Modal } from './components/Modal';
+import { WorkerForm } from './components/WorkerForm';
+import { ShiftForm } from './components/ShiftForm';
 import { EMPRESA, SHIFT_TYPES, WORKERS, buildMockShifts } from './data/mock';
 
 const HOY = new Date();
+
+type WorkerModalState = { mode: 'new' } | { mode: 'edit'; worker: Worker } | null;
+type ShiftModalState = { workerId: string; iso: string; shift?: ScheduledShift } | null;
+
+function newShiftId() {
+  return `sh-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+}
 
 export default function App() {
   const [view, setView] = useState<ViewMode>('semana');
   const [anchor, setAnchor] = useState<Date>(new Date());
   const [scope, setScope] = useState<string>('todos');
 
-  const shifts = useMemo(() => buildMockShifts(anchor), [anchor]);
+  const [workers, setWorkers] = useState<Worker[]>(() => loadJSON(STORAGE_KEYS.workers, WORKERS));
+  const [shifts, setShifts] = useState<ScheduledShift[]>(
+    () => loadJSON(STORAGE_KEYS.shifts, buildMockShifts(new Date())),
+  );
+
+  const [workerModal, setWorkerModal] = useState<WorkerModalState>(null);
+  const [shiftModal, setShiftModal] = useState<ShiftModalState>(null);
+
+  useEffect(() => saveJSON(STORAGE_KEYS.workers, workers), [workers]);
+  useEffect(() => saveJSON(STORAGE_KEYS.shifts, shifts), [shifts]);
 
   const days = useMemo(() => {
     if (view === 'mes') {
@@ -26,16 +46,16 @@ export default function App() {
     return eachDay(from, addDays(from, len - 1));
   }, [view, anchor]);
 
-  const workers = useMemo(() => {
-    const active = WORKERS.filter((w) => w.status === 'activo');
+  const areas = useMemo(
+    () => Array.from(new Set(workers.map((w) => w.area))).sort(),
+    [workers],
+  );
+
+  const visibleWorkers = useMemo(() => {
+    const active = workers.filter((w) => w.status === 'activo');
     if (scope === 'todos') return active;
     return active.filter((w) => w.area === scope);
-  }, [scope]);
-
-  const areas = useMemo(
-    () => Array.from(new Set(WORKERS.map((w) => w.area))).sort(),
-    [],
-  );
+  }, [workers, scope]);
 
   const step = (dir: number) => {
     if (view === 'mes') {
@@ -48,6 +68,41 @@ export default function App() {
   const periodLabel = view === 'mes'
     ? fmtMonthYear(anchor)
     : `${fmtLong(days[0])} — ${fmtLong(days[days.length - 1])}`;
+
+  const saveWorker = (worker: Worker) => {
+    setWorkers((prev) => (
+      prev.some((w) => w.id === worker.id)
+        ? prev.map((w) => (w.id === worker.id ? worker : w))
+        : [...prev, worker]
+    ));
+    setWorkerModal(null);
+  };
+
+  const deleteWorker = (id: string) => {
+    if (!window.confirm('¿Eliminar este trabajador? También se quitarán sus turnos asignados.')) return;
+    setWorkers((prev) => prev.filter((w) => w.id !== id));
+    setShifts((prev) => prev.filter((s) => s.workerId !== id));
+    setWorkerModal(null);
+  };
+
+  const saveShift = (data: Pick<ScheduledShift, 'shiftTypeId' | 'start' | 'end' | 'breakMinutes' | 'notes'>) => {
+    if (!shiftModal) return;
+    const { workerId, iso, shift } = shiftModal;
+    if (shift) {
+      setShifts((prev) => prev.map((s) => (s.id === shift.id ? { ...s, ...data } : s)));
+    } else {
+      setShifts((prev) => [...prev, {
+        id: newShiftId(), workerId, date: iso, status: 'publicado', ...data,
+      }]);
+    }
+    setShiftModal(null);
+  };
+
+  const deleteShift = () => {
+    if (!shiftModal?.shift) return;
+    setShifts((prev) => prev.filter((s) => s.id !== shiftModal.shift!.id));
+    setShiftModal(null);
+  };
 
   return (
     <div className="app">
@@ -98,6 +153,7 @@ export default function App() {
             <button onClick={() => step(1)} aria-label="Siguiente">›</button>
           </div>
 
+          <button className="primary" onClick={() => setWorkerModal({ mode: 'new' })}>+ Trabajador</button>
           <button className="ghost" onClick={() => window.print()}>Imprimir</button>
         </div>
       </header>
@@ -120,22 +176,55 @@ export default function App() {
 
         <CalendarGrid
           days={days}
-          workers={workers}
+          workers={visibleWorkers}
           shifts={shifts}
           shiftTypes={SHIFT_TYPES}
           today={HOY}
-          onCellClick={(workerId, iso) => {
-            const w = WORKERS.find((x) => x.id === workerId);
-            // Placeholder — la edición individual llega en la sesión 2 (ver BITACORA).
-            alert(`Editar turno\n${w?.fullName}\n${iso}\n\n(pendiente: panel de edición)`);
+          onCellClick={(workerId, iso) => setShiftModal({ workerId, iso })}
+          onShiftClick={(shift) => setShiftModal({ workerId: shift.workerId, iso: shift.date, shift })}
+          onWorkerClick={(workerId) => {
+            const w = workers.find((x) => x.id === workerId);
+            if (w) setWorkerModal({ mode: 'edit', worker: w });
           }}
         />
 
         <footer className="sheet-foot">
           <span>Emitido: {toISO(HOY)}</span>
-          <span>Datos de ejemplo — sin backend todavía</span>
+          <span>Guardado en este navegador — sin backend todavía</span>
         </footer>
       </section>
+
+      {workerModal && (
+        <Modal
+          title={workerModal.mode === 'edit' ? 'Editar trabajador' : 'Nuevo trabajador'}
+          onClose={() => setWorkerModal(null)}
+        >
+          <WorkerForm
+            initial={workerModal.mode === 'edit' ? workerModal.worker : undefined}
+            areas={areas}
+            onSave={saveWorker}
+            onDelete={workerModal.mode === 'edit' ? () => deleteWorker(workerModal.worker.id) : undefined}
+            onClose={() => setWorkerModal(null)}
+          />
+        </Modal>
+      )}
+
+      {shiftModal && (
+        <Modal
+          title={shiftModal.shift ? 'Editar turno' : 'Nuevo turno'}
+          onClose={() => setShiftModal(null)}
+        >
+          <ShiftForm
+            workerName={workers.find((w) => w.id === shiftModal.workerId)?.fullName ?? ''}
+            dateLabel={fmtLong(fromISO(shiftModal.iso))}
+            shiftTypes={SHIFT_TYPES}
+            initial={shiftModal.shift}
+            onSave={saveShift}
+            onDelete={shiftModal.shift ? deleteShift : undefined}
+            onClose={() => setShiftModal(null)}
+          />
+        </Modal>
+      )}
     </div>
   );
 }

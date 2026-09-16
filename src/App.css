@@ -123,6 +123,22 @@ body {
 .ghost:active { transform: translateY(0); box-shadow: var(--shadow-1); }
 .ghost:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
 
+.primary {
+  border: 0; background: var(--color-primary); border-radius: var(--radius-sm);
+  padding: 10px 18px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--color-on-primary);
+  box-shadow: var(--shadow-1); transition: box-shadow var(--transition), background var(--transition), transform var(--transition);
+}
+.primary:hover { background: var(--color-primary-hover); box-shadow: var(--shadow-2); transform: translateY(-1px); }
+.primary:active { transform: translateY(0); box-shadow: var(--shadow-1); }
+.primary:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
+
+.danger-ghost {
+  border: 0; background: transparent; border-radius: var(--radius-sm);
+  padding: 10px 14px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--color-destructive);
+  transition: background var(--transition);
+}
+.danger-ghost:hover { background: color-mix(in srgb, var(--color-destructive) 8%, transparent); }
+
 /* ---------- Sheet ---------- */
 .sheet {
   background: var(--color-card); border-radius: var(--radius);
@@ -186,7 +202,13 @@ body {
   box-shadow: 1px 0 0 var(--color-border);
 }
 .worker .swatch { width: 6px; align-self: stretch; border-radius: var(--radius-pill); flex: none; min-height: 34px; }
-.worker .wname { display: flex; flex-direction: column; }
+.worker .wname {
+  display: flex; flex-direction: column; text-align: left; border: 0; background: transparent;
+  padding: 2px 4px; margin: -2px -4px; cursor: pointer; font-family: inherit; border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+.worker .wname:hover { background: var(--color-card); box-shadow: var(--shadow-1); }
+.worker .wname:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 1px; }
 .worker .wname strong { font-size: 13px; font-weight: 600; line-height: 1.25; color: var(--color-foreground); }
 .worker .wname small { color: var(--color-muted-foreground); font-size: 11px; }
 
@@ -200,16 +222,69 @@ body {
 .grid tr:hover td.cell.empty::after { color: var(--color-primary); }
 
 .chip {
-  border-left: 3px solid var(--chip); background: color-mix(in srgb, var(--chip) 10%, #fff);
+  width: 100%; text-align: left; font-family: inherit; cursor: pointer;
+  border: 0; border-left: 3px solid var(--chip); background: color-mix(in srgb, var(--chip) 10%, #fff);
   border-radius: var(--radius-sm); padding: 5px 7px; margin-bottom: 4px; display: grid; gap: 1px;
   box-shadow: var(--shadow-1); transition: box-shadow var(--transition), transform var(--transition);
 }
+.chip:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 1px; }
 .chip:hover { box-shadow: var(--shadow-2); transform: translateY(-1px); }
 .chip-code { font-weight: 700; font-size: 11px; color: var(--chip); letter-spacing: .3px; }
 .chip-time { font-size: 12px; color: var(--color-foreground); }
 .chip-net { font-size: 11px; color: var(--color-muted-foreground); }
 
 .grid td.total { text-align: center; font-weight: 700; color: var(--color-foreground); }
+
+/* ---------- Modal ---------- */
+.modal-scrim {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, .45); backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center; padding: var(--space-4); z-index: 100;
+}
+.modal-card {
+  background: var(--color-card); border-radius: var(--radius); box-shadow: var(--shadow-3);
+  width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--color-border);
+}
+.modal-head h3 { margin: 0; font-size: 16px; font-weight: 700; }
+.modal-close {
+  border: 0; background: var(--color-muted); color: var(--color-muted-foreground); width: 32px; height: 32px;
+  border-radius: 50%; display: grid; place-items: center; cursor: pointer; transition: background var(--transition), color var(--transition);
+}
+.modal-close:hover { background: var(--color-border); color: var(--color-foreground); }
+.modal-close svg { width: 16px; height: 16px; }
+.modal-body { padding: var(--space-5); }
+
+/* ---------- Formularios (modal) ---------- */
+.form { display: flex; flex-direction: column; gap: var(--space-4); }
+.form-row { display: flex; gap: var(--space-3); }
+.form-row .form-field { flex: 1; min-width: 0; }
+.form-field { display: flex; flex-direction: column; gap: var(--space-1); font-size: 12px; color: var(--color-muted-foreground); }
+.form-field input, .form-field select {
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: 9px 11px;
+  font-family: inherit; font-size: 14px; color: var(--color-foreground); background: var(--color-card);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.form-field input:focus-visible, .form-field select:focus-visible {
+  outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+.form-context { margin: 0; padding: var(--space-3) var(--space-4); background: var(--color-muted); border-radius: var(--radius-sm); font-size: 13px; }
+.form-error {
+  margin: 0; padding: var(--space-2) var(--space-3); background: color-mix(in srgb, var(--color-destructive) 8%, transparent);
+  color: var(--color-destructive); border-radius: var(--radius-sm); font-size: 13px;
+}
+.form-actions { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-2); }
+.form-actions-right { display: flex; gap: var(--space-2); margin-left: auto; }
+
+.swatch-picker { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.swatch-option {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
+  box-shadow: var(--shadow-1); transition: transform var(--transition), border-color var(--transition);
+}
+.swatch-option:hover { transform: scale(1.1); }
+.swatch-option.selected { border-color: var(--color-foreground); }
 
 /* ---------- Print ---------- */
 @media print {
