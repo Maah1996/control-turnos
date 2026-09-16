@@ -34,10 +34,11 @@ export function CalendarGrid({
       <table className="grid" style={{ ['--cols' as string]: days.length }}>
         <thead>
           <tr>
-            <th className="corner">Trabajador</th>
+            <th className="corner" scope="col">Trabajador</th>
             {days.map((d) => (
               <th
                 key={toISO(d)}
+                scope="col"
                 className={
                   'daycol'
                   + (isWeekend(d) ? ' weekend' : '')
@@ -48,10 +49,17 @@ export function CalendarGrid({
                 <span className="dnum">{d.getDate()}</span>
               </th>
             ))}
-            <th className="totalcol">Horas</th>
+            <th className="totalcol" scope="col">Horas</th>
           </tr>
         </thead>
         <tbody>
+          {workers.length === 0 && (
+            <tr>
+              <td className="empty-state" colSpan={days.length + 2}>
+                No hay trabajadores para este alcance. Prueba con "Todos los trabajadores" o crea uno nuevo con "+ Trabajador".
+              </td>
+            </tr>
+          )}
           {workers.map((w) => (
             <tr key={w.id}>
               <th className="worker" scope="row">

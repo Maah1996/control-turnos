@@ -293,6 +293,45 @@ nativo ya se había verificado antes y no es manejable desde el navegador automa
 **Archivos modificados (ajuste 4):** `src/components/CalendarGrid.tsx`, `src/App.tsx`,
 `src/App.css`.
 
+**Ajuste 5 — mismo día: auditoría UI/UX integral (senior UI/UX + frontend design).** El
+usuario pidió explícitamente actuar como diseñador UI/UX senior y usar `ui-ux-pro-max` para
+analizar y mejorar TODO el proyecto (no solo estética), protegiendo la funcionalidad
+existente. Se hizo primero una auditoría real del código y del comportamiento en 375px
+(móvil) y 768px (tablet) — con consultas puntuales al skill (`--domain ux`: touch target
+size, hover vs tap, reduced motion, contraste) para fundamentar cada decisión — **antes**
+de tocar nada, y se encontraron bugs reales (no solo estética):
+
+| Hallazgo | Evidencia | Corrección |
+|---|---|---|
+| El botón de eliminar trabajador (ajuste 4) es invisible en pantallas táctiles reales | `opacity:0` dependía de `:hover`, que no existe de forma confiable en touch | Gateado con `@media (hover: hover) and (pointer: fine)`; en touch queda siempre visible |
+| Input "Hora inicio/término" se corta bajo su propio ícono de reloj en 375px | Captura de pantalla en móvil con `ShiftForm` abierto | `.form-row` pasa a columna única bajo 520px |
+| Botones "Quitar turno"/"Eliminar trabajador" se partían en dos líneas en 375px | Captura de pantalla en móvil | `.form-actions` pasa a columna (botón destructivo arriba, Cancelar/Guardar abajo) en el mismo breakpoint |
+| El "+" de celda vacía casi no se distinguía del fondo | `--color-border-strong` (#cbd5e1) sobre blanco ≈1.5:1, bajo el mínimo no-text de WCAG | Color por defecto cambiado a `--color-muted-foreground` (#475569, ~7:1) |
+| Inputs de "Secciones" (`AreaManager`) sin `<label>` asociado (solo placeholder) | Regla `input-labels`/`form-labels` del skill | Se agregó `<label class="visually-hidden">` a ambos inputs |
+| Inputs de 14px en formularios provocan zoom automático de iOS al enfocar en el celular | Regla `readable-font-size` (mín. 16px en mobile) | `font-size: 16px` para esos inputs solo bajo 520px (en desktop se mantiene la densidad 14px ya elegida) |
+| Encabezados de la tabla sin `scope="col"` | Revisión de estructura semántica | Se agregó a los tres `<th>` del `thead` |
+| Sin mensaje cuando un filtro de "Alcance" no deja ningún trabajador visible | Regla `empty-states`; se armó el caso a propósito (sección vacía + filtro) para confirmarlo | Fila con mensaje ("No hay trabajadores para este alcance…") en vez de tabla en blanco |
+| El modal no atrapaba el foco de teclado (`Tab` se escapaba a la página de atrás) | Prueba manual con teclado (`Tab`/`Shift+Tab`) | `Modal.tsx`: ciclo de foco dentro del diálogo |
+| Al cerrar un modal, el foco no volvía al botón que lo abrió | Misma prueba de teclado — quedaba en `<body>` | Se captura `document.activeElement` en el render inicial (antes de que el `autoFocus` interno lo robara) y se restaura al desmontar |
+| Ninguna transición respetaba `prefers-reduced-motion` | Ausente en todo el CSS | Bloque global que anula duraciones/transform en hover cuando el usuario lo pide |
+
+Se **verificó cada corrección en el navegador** (no alcanzó con que compilara): capturas en
+375px y 768px antes/después, prueba de teclado real (`Tab`/`Shift+Tab`/`Escape`) para el
+foco del modal, y un caso de prueba armado a propósito para el estado vacío (sección sin
+trabajadores, limpiada después). `tsc -b` sin errores en cada paso, sin errores de consola.
+
+**Explícitamente NO tocado / fuera de esta pasada (quedan como recomendación, no como bug):**
+reemplazar `window.confirm`/`alert` nativos por un diálogo propio del sistema de diseño;
+mensaje de éxito tras Guardar (hoy el cierre del modal + el cambio visible en la grilla es la
+única confirmación); modo oscuro; unificar del todo las clases de botón (`.primary/.ghost/
+.nav button/.segmented button` ya comparten tokens de color/radio/sombra, solo difieren en
+padding — se juzgó una escala de tamaños válida, no una inconsistencia real); la superposición
+de chips en vista Mes (bug de layout ya anotado en la sesión 2, ajuste 1 — no es de esta
+pasada). No se cambió ninguna lógica de negocio, cálculo, filtro ni el modelo de datos.
+
+**Archivos modificados (ajuste 5):** `src/App.css`, `src/components/Modal.tsx`,
+`src/components/CalendarGrid.tsx`, `src/components/AreaManager.tsx`.
+
 ---
 ---
 

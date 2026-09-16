@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 interface Props {
@@ -7,16 +7,44 @@ interface Props {
   children: ReactNode;
 }
 
+const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
 export function Modal({ title, onClose, children }: Props) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  // Se captura durante el render inicial — antes de que el autoFocus del formulario
+  // interno mueva el foco, que ocurre en el "commit" justo después.
+  const [previouslyFocused] = useState(() => document.activeElement as HTMLElement | null);
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key !== 'Tab' || !cardRef.current) return;
+
+      const focusable = Array.from(cardRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      previouslyFocused?.focus();
+    };
+  }, [onClose, previouslyFocused]);
 
   return (
     <div className="modal-scrim" onClick={onClose}>
       <div
+        ref={cardRef}
         className="modal-card"
         role="dialog"
         aria-modal="true"

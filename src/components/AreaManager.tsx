@@ -42,7 +42,9 @@ export function AreaManager({ areas, workerCounts, onAdd, onRename, onDelete, on
       {error && <p className="form-error">{error}</p>}
 
       <form className="area-add-row" onSubmit={submitNew}>
+        <label className="visually-hidden" htmlFor="area-new-name">Nombre de la nueva sección</label>
         <input
+          id="area-new-name"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Nombre de la nueva sección (ej: Cocina)"
@@ -60,7 +62,9 @@ export function AreaManager({ areas, workerCounts, onAdd, onRename, onDelete, on
           <li key={a} className="area-row">
             {editing === a ? (
               <>
+                <label className="visually-hidden" htmlFor={`area-edit-${a}`}>Renombrar sección {a}</label>
                 <input
+                  id={`area-edit-${a}`}
                   className="area-edit-input"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
