@@ -6,6 +6,7 @@ import {
 interface Props {
   days: Date[];
   workers: Worker[];
+  allWorkers: Worker[];
   shifts: ScheduledShift[];
   shiftTypes: ShiftType[];
   today: Date;
@@ -13,10 +14,12 @@ interface Props {
   onShiftClick?: (shift: ScheduledShift) => void;
   onWorkerClick?: (workerId: string) => void;
   onDeleteWorker?: (workerId: string) => void;
+  onRowWorkerChange?: (rowIndex: number, newWorkerId: string) => void;
 }
 
 export function CalendarGrid({
-  days, workers, shifts, shiftTypes, today, onCellClick, onShiftClick, onWorkerClick, onDeleteWorker,
+  days, workers, allWorkers, shifts, shiftTypes, today,
+  onCellClick, onShiftClick, onWorkerClick, onDeleteWorker, onRowWorkerChange,
 }: Props) {
   const typeById = new Map(shiftTypes.map((t) => [t.id, t]));
 
@@ -60,19 +63,35 @@ export function CalendarGrid({
               </td>
             </tr>
           )}
-          {workers.map((w) => (
-            <tr key={w.id}>
+          {workers.map((w, rowIndex) => (
+            <tr key={`row-${rowIndex}`}>
               <th className="worker" scope="row">
                 <span className="swatch" style={{ background: w.color }} />
-                <button
-                  type="button"
-                  className="wname"
-                  onClick={() => onWorkerClick?.(w.id)}
-                  title="Editar trabajador"
-                >
-                  <strong>{w.fullName}</strong>
-                  <small>{w.position} · {w.area}</small>
-                </button>
+                <div className="worker-main">
+                  <button
+                    type="button"
+                    className="wname"
+                    onClick={() => onWorkerClick?.(w.id)}
+                    title="Editar trabajador"
+                  >
+                    <strong>{w.fullName}</strong>
+                    <small>{w.position} · {w.area}</small>
+                  </button>
+                  <label className="worker-swap-label" htmlFor={`worker-swap-${rowIndex}`}>
+                    <span className="visually-hidden">Cambiar el trabajador de esta fila</span>
+                    <select
+                      id={`worker-swap-${rowIndex}`}
+                      className="worker-swap"
+                      value={w.id}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => { e.stopPropagation(); onRowWorkerChange?.(rowIndex, e.target.value); }}
+                    >
+                      {allWorkers.map((opt) => (
+                        <option key={opt.id} value={opt.id}>{opt.fullName}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
                 <button
                   type="button"
                   className="worker-delete"

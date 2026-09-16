@@ -40,6 +40,10 @@ export default function App() {
   const [shiftModal, setShiftModal] = useState<ShiftModalState>(null);
   const [areaManagerOpen, setAreaManagerOpen] = useState(false);
   const [confirmDeleteWorkerId, setConfirmDeleteWorkerId] = useState<string | null>(null);
+  // Permite reemplazar, fila por fila, a qué trabajador de la base se está mirando —
+  // sin tocar los turnos reales de nadie. Se reinicia si cambia el filtro de Alcance,
+  // porque ahí cambia de raíz qué trabajadores corresponden a cada fila.
+  const [rowOverrides, setRowOverrides] = useState<Record<number, string>>({});
 
   useEffect(() => saveJSON(STORAGE_KEYS.workers, workers), [workers]);
   useEffect(() => saveJSON(STORAGE_KEYS.shifts, shifts), [shifts]);
@@ -72,11 +76,28 @@ export default function App() {
     return counts;
   }, [areas, workers]);
 
+  const activeWorkers = useMemo(
+    () => [...workers].filter((w) => w.status === 'activo').sort((a, b) => a.fullName.localeCompare(b.fullName, 'es')),
+    [workers],
+  );
+
   const visibleWorkers = useMemo(() => {
-    const active = workers.filter((w) => w.status === 'activo');
-    if (scope === 'todos') return active;
-    return active.filter((w) => w.area === scope);
-  }, [workers, scope]);
+    if (scope === 'todos') return activeWorkers;
+    return activeWorkers.filter((w) => w.area === scope);
+  }, [activeWorkers, scope]);
+
+  // El filtro de Alcance define, por defecto, quién va en cada fila; un cambio manual
+  // por fila (rowOverrides) lo reemplaza sin mover los turnos de nadie.
+  const displayedWorkers = useMemo(
+    () => visibleWorkers.map((w, i) => {
+      const overrideId = rowOverrides[i];
+      if (!overrideId) return w;
+      return workers.find((x) => x.id === overrideId) ?? w;
+    }),
+    [visibleWorkers, rowOverrides, workers],
+  );
+
+  useEffect(() => setRowOverrides({}), [scope]);
 
   const step = (dir: number) => {
     if (view === 'mes') {
@@ -224,7 +245,8 @@ export default function App() {
 
         <CalendarGrid
           days={days}
-          workers={visibleWorkers}
+          workers={displayedWorkers}
+          allWorkers={activeWorkers}
           shifts={shifts}
           shiftTypes={SHIFT_TYPES}
           today={HOY}
@@ -235,6 +257,7 @@ export default function App() {
             if (w) setWorkerModal({ mode: 'edit', worker: w });
           }}
           onDeleteWorker={deleteWorker}
+          onRowWorkerChange={(rowIndex, newWorkerId) => setRowOverrides((prev) => ({ ...prev, [rowIndex]: newWorkerId }))}
         />
 
         <footer className="sheet-foot">

@@ -354,6 +354,37 @@ un diálogo de confirmación propio:
 **Archivos nuevos (ajuste 6):** `src/components/ConfirmDialog.tsx`.
 **Archivos modificados (ajuste 6):** `src/App.tsx`, `src/App.css`.
 
+**Ajuste 7 — mismo día: desplegable para reemplazar quién ocupa cada fila.** El usuario pidió
+"una base de datos de trabajadores" con un desplegable en la columna Trabajador para poder
+cambiar, fila por fila, a qué trabajador se está mirando. Se aclaró primero con el usuario
+qué debía hacer exactamente el desplegable (podía significar cosas distintas) — eligió:
+reemplazar quién ocupa esa fila, con sus propios turnos reales (no mezclar datos entre
+trabajadores). Implementado como una capa de **visualización**, sin tocar los turnos de nadie:
+
+- `App.tsx`: nuevo estado `rowOverrides: Record<number, string>` (índice de fila → id de
+  trabajador elegido). `activeWorkers` (todos los trabajadores activos, para el desplegable,
+  ordenados alfabéticamente) separado de `visibleWorkers` (según el filtro Alcance).
+  `displayedWorkers` combina ambos: por defecto muestra `visibleWorkers`, pero si una fila
+  tiene un `rowOverride`, muestra a ese trabajador en su lugar — mirando sus turnos reales
+  (`shiftsFor`/`workerWeekMinutes` ya funcionan por `workerId`, no por posición). Los
+  `rowOverrides` se reinician al cambiar el filtro "Alcance" (si cambia de raíz quién
+  corresponde a cada fila, mantener el cambio manual sería confuso); **no** se reinician al
+  navegar entre semanas/meses (para poder seguir viendo a la persona elegida al paginar).
+  Es solo de la sesión — no se guarda en `localStorage`.
+- `CalendarGrid.tsx`: nuevas props `allWorkers` (opciones del desplegable) y
+  `onRowWorkerChange(rowIndex, newWorkerId)`. Cada fila suma un `<select>` pequeño bajo el
+  nombre (con `<label>` accesible), además del botón de editar y el de eliminar que ya
+  existían. La `key` de cada `<tr>` pasó de `w.id` a un índice de fila estable, porque ahora
+  puede repetirse el mismo trabajador en más de una fila.
+- Verificado en vivo: cambiar la fila de Camila a "Rosa Elena Mansilla" → la fila pasa a
+  mostrar el color, cargo, sección, turnos NOC y total de horas reales de Rosa (no los de
+  Camila) → cambiar el filtro Alcance y volver a "Todos" → la fila vuelve a Camila (el cambio
+  manual se reinició). `tsc -b` sin errores, sin errores de consola (una vez descartado ruido
+  de consola de una pestaña anterior, confirmado abriendo una pestaña nueva).
+
+**Archivos modificados (ajuste 7):** `src/App.tsx`, `src/components/CalendarGrid.tsx`,
+`src/App.css`.
+
 ---
 ---
 
