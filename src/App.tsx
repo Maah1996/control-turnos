@@ -53,7 +53,14 @@ export default function App() {
     <div className="app">
       <header className="topbar no-print">
         <div className="brand">
-          <span className="logo">◷</span>
+          <span className="logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="4.5" width="18" height="16" rx="3" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M3 9.5h18" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M8 2.5v4M16 2.5v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M12 13v3l2 1.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
           <div>
             <h1>Control de Turnos</h1>
             <p>{EMPRESA.nombre} · {EMPRESA.sucursal}</p>

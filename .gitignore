@@ -25,3 +25,6 @@ dist-ssr
 
 # Datos locales / bitácora en PDF
 BITACORA.pdf
+
+# Bytecode de Python (scripts de skills locales)
+__pycache__/

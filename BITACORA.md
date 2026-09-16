@@ -36,14 +36,19 @@ El prompt maestro pedía **React + Vite + Supabase**. Se optó por **React + Vit
 
 **Estado actual:** proyecto scaffolded (Vite + React + TS). Existe la pantalla de
 **Calendario de Turnos** con datos de ejemplo (mock), vistas semana/mes, filas por
-trabajador y columnas por día. Sin backend todavía, sin edición todavía.
+trabajador y columnas por día. Rediseño visual (paleta/tipografía/estilo) hecho con el
+skill `ui-ux-pro-max` (sesión 2). Sin backend todavía, sin edición todavía.
 
 **Siguiente sesión — hacer, en orden:**
-1. Revisar en vivo la grilla del calendario y confirmar diseño/legibilidad del "mural".
+1. ~~Revisar en vivo la grilla del calendario y confirmar diseño/legibilidad del "mural".~~
+   Rediseño visual verificado en vivo (semana y mes) — falta confirmación explícita del usuario.
 2. Edición **individual** de celda (panel lateral: turno, hora inicio/término, colación, notas).
 3. Estado **borrador** en memoria + botón Guardar con resumen de cambios (aún sin Firebase).
 4. Selector de rango quincena + rango personalizado (hoy solo semana y mes).
 5. Recién después: crear proyecto Firebase + repo GitHub + primera subida.
+6. (Menor, detectado en la sesión 2) En vista **Mes** los chips de turno se amontonan/superponen
+   por lo angosto de cada columna de día — no se tocó porque no era parte del pedido de esta
+   sesión (rediseño visual); ajustar cuando se retome la grilla.
 
 **Pendientes de fondo (no bloquean, anotados para no olvidar):**
 - Definir si el registro de asistencia será "registro oficial" (estándar RCE de la Dirección
@@ -137,6 +142,42 @@ Remote guardado sin token en la URL. Token válido: el 1º de `preferencias_usua
 **Pendiente para la sesión 2:** ver "▶ PARA RETOMAR".
 
 **Confirmado en vivo por el usuario:** (pendiente — el usuario debe revisar la grilla)
+
+---
+
+### Sesión 2 — 2026-09-16
+
+**Hecho:**
+- Rediseño visual de la pantalla del Calendario de Turnos usando el skill de proyecto
+  `.claude/skills/ui-ux-pro-max` (design intelligence: paletas, tipografía, estilo, densidad).
+- Comando ejecutado: `search.py "productivity workforce scheduling calendar shift management"
+  --design-system -p "Control de Turnos" --density 8 --motion 3`.
+- **Estilo elegido por el skill:** Flat Design (2D, sin sombras/gradientes, colores sólidos,
+  tipografía como jerarquía) — el más recomendado para SaaS/dashboards/productividad, encaja
+  con una grilla densa de datos que debe imprimirse limpia.
+- **Paleta ("Calendar blue + event green"):** primario `#2563EB` (azul, controles/foco/pestaña
+  activa), acento `#059669` (verde, resalte de "hoy"), fondo `#F8FAFC`, texto `#0F172A`, texto
+  secundario `#475569` (ratio ≥4.5:1 sobre blanco y fondo), bordes `#E4ECFC`/`#CBD5E1`,
+  destructivo `#DC2626` (reservado, no usado aún). Los colores de turno (AM/PM/Noche) siguen
+  siendo los de `data/mock.ts`, no se tocaron.
+- **Tipografía:** Plus Jakarta Sans (Google Fonts) para todo — el skill la recomienda para
+  "SaaS/dashboards/productividad" por su carácter moderno, amigable y profesional; antes la
+  app usaba la fuente del sistema (Segoe UI).
+- **Densidad:** dial `--density 8` (dashboard/denso, escala de espaciado 8–32px) en vez del
+  valor por defecto, apropiado para una tabla con muchas filas/columnas visibles a la vez.
+- Aplicado en `src/App.css` (tokens `--color-*`, `--space-*`, tipografía, hovers/focus-visible
+  con anillo de foco accesible) y `src/App.tsx` (ícono del logo: SVG en vez del glifo `◷`, por
+  la regla del skill de no usar glifos/emoji como íconos estructurales).
+- Verificado en vivo con dev server (puerto 5189, el 5188 estaba tomado) — vistas Semana y Mes,
+  sin errores de consola.
+
+**Hallazgo (no corregido, fuera de alcance de esta sesión):** en vista Mes los chips de turno
+se superponen porque las columnas de día quedan muy angostas con `table-layout: fixed`; es un
+problema de layout/estructura de la grilla, no de paleta/tipografía — anotado en "▶ Para retomar".
+
+**Archivos modificados:** `src/App.css`, `src/App.tsx`.
+
+**Confirmado en vivo por el usuario:** (pendiente — sesión en curso, falta que el usuario revise)
 
 ---
 ---
