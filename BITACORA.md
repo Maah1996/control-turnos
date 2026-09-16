@@ -80,7 +80,8 @@ backend todavía (sin Firebase, sin multiusuario, sin auditoría).
 
 ### Fase 1 — MVP (planificación e impresión)
 - [~] ABM empresa, sucursales, áreas, cargos y trabajadores *(alta/edición/baja individual de
-  trabajador con cargo y sección; falta empresa/sucursales, edición masiva e importación)*
+  trabajador con cargo; **áreas/secciones con ABM propio** — crear/renombrar/eliminar; falta
+  empresa/sucursales, edición masiva de trabajadores e importación)*
 - [ ] Tipos de turno y horarios por defecto *(existen 3 tipos base fijos AM/PM/Noche; falta
   pantalla de configuración para crear/editar tipos)*
 - [~] Calendario de turnos — vistas día/semana/quincena/mes  *(semana, quincena y mes; falta día
@@ -248,6 +249,38 @@ Se construyó:
 `src/components/WorkerForm.tsx`, `src/components/ShiftForm.tsx`.
 **Archivos modificados (ajuste 2):** `src/App.tsx`, `src/components/CalendarGrid.tsx`,
 `src/App.css`.
+
+**Ajuste 3 — mismo día: administrador de Secciones.** El usuario preguntó cómo crear más
+secciones; hasta ese punto una sección solo "existía" si algún trabajador la tenía asignada
+(texto libre con `<datalist>`), sin forma de crear una sección vacía de antemano ni de
+renombrarla/eliminarla como entidad propia. Se preguntó si bastaba con seguir usando el campo
+del formulario de trabajador o si convenía una pantalla dedicada — el usuario eligió la
+pantalla dedicada. Se construyó:
+- Las secciones pasan a ser su propia lista (`turnos_areas_v1` en `localStorage`), separada
+  de los trabajadores — antes se derivaban con `Array.from(new Set(workers.map(w => w.area)))`.
+- `src/components/AreaManager.tsx`: pantalla (modal) para **crear** una sección nueva (puede
+  quedar vacía, sin trabajadores), **renombrarla** (el cambio se propaga en cascada a todos
+  los trabajadores que la tenían — si el nuevo nombre coincide con una sección ya existente,
+  ambas se fusionan) y **eliminarla** (el botón se deshabilita con un tooltip si todavía tiene
+  trabajadores asignados, para no dejar datos huérfanos).
+- `App.tsx`: `addArea`/`renameArea`/`deleteArea` con las validaciones de arriba; un `useEffect`
+  reincorpora a la lista cualquier sección que un trabajador tenga pero que no esté en
+  `turnos_areas_v1` (defensivo, por si hay datos antiguos). Botón **"Secciones"** nuevo en la
+  barra superior, junto a "+ Trabajador".
+- `src/components/WorkerForm.tsx`: el campo "Sección/Área" pasó de texto libre a un `<select>`
+  con las secciones administradas (ya no se puede escribir una sección nueva ahí — hay que
+  crearla primero en "Secciones"; si no existe ninguna, el campo se deshabilita con el aviso
+  "Crea una sección primero").
+- Verificado en vivo: crear sección vacía "Cocina" (0 trabajadores) → aparece en el filtro
+  Alcance → renombrar "Servicios" a "Aseo y Servicios" → se propaga sola al trabajador Rosa
+  Elena Mansilla y al filtro Alcance → "Eliminar" deshabilitado en las secciones con
+  trabajadores, habilitado en "Cocina" (vacía) → eliminar "Cocina" → desaparece del filtro.
+  `tsc -b` sin errores, sin errores de consola. Datos de prueba limpiados
+  (`localStorage.clear` de las 3 claves vía consola).
+
+**Archivos nuevos (ajuste 3):** `src/components/AreaManager.tsx`.
+**Archivos modificados (ajuste 3):** `src/App.tsx`, `src/components/WorkerForm.tsx`,
+`src/lib/storage.ts`, `src/App.css`.
 
 ---
 ---

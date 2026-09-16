@@ -3,6 +3,7 @@
 
 const KEY_WORKERS = 'turnos_workers_v1';
 const KEY_SHIFTS = 'turnos_shifts_v1';
+const KEY_AREAS = 'turnos_areas_v1';
 
 export function loadJSON<T>(key: string, fallback: T): T {
   try {
@@ -22,4 +23,4 @@ export function saveJSON<T>(key: string, value: T): void {
   }
 }
 
-export const STORAGE_KEYS = { workers: KEY_WORKERS, shifts: KEY_SHIFTS };
+export const STORAGE_KEYS = { workers: KEY_WORKERS, shifts: KEY_SHIFTS, areas: KEY_AREAS };

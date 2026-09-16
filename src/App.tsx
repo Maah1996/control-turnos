@@ -10,6 +10,7 @@ import { CalendarGrid } from './components/CalendarGrid';
 import { Modal } from './components/Modal';
 import { WorkerForm } from './components/WorkerForm';
 import { ShiftForm } from './components/ShiftForm';
+import { AreaManager } from './components/AreaManager';
 import { EMPRESA, SHIFT_TYPES, WORKERS, buildMockShifts } from './data/mock';
 
 const HOY = new Date();
@@ -30,12 +31,28 @@ export default function App() {
   const [shifts, setShifts] = useState<ScheduledShift[]>(
     () => loadJSON(STORAGE_KEYS.shifts, buildMockShifts(new Date())),
   );
+  const [areas, setAreas] = useState<string[]>(
+    () => loadJSON(STORAGE_KEYS.areas, Array.from(new Set(WORKERS.map((w) => w.area))).sort()),
+  );
 
   const [workerModal, setWorkerModal] = useState<WorkerModalState>(null);
   const [shiftModal, setShiftModal] = useState<ShiftModalState>(null);
+  const [areaManagerOpen, setAreaManagerOpen] = useState(false);
 
   useEffect(() => saveJSON(STORAGE_KEYS.workers, workers), [workers]);
   useEffect(() => saveJSON(STORAGE_KEYS.shifts, shifts), [shifts]);
+  useEffect(() => saveJSON(STORAGE_KEYS.areas, areas), [areas]);
+
+  // Si algún trabajador quedó con una sección que ya no está en la lista administrada
+  // (datos antiguos, o cambios hechos fuera de esta pantalla), se reincorpora sola.
+  useEffect(() => {
+    const used = workers.map((w) => w.area).filter(Boolean);
+    setAreas((prev) => {
+      const merged = Array.from(new Set([...prev, ...used])).sort();
+      const same = merged.length === prev.length && merged.every((a, i) => a === prev[i]);
+      return same ? prev : merged;
+    });
+  }, [workers]);
 
   const days = useMemo(() => {
     if (view === 'mes') {
@@ -46,10 +63,12 @@ export default function App() {
     return eachDay(from, addDays(from, len - 1));
   }, [view, anchor]);
 
-  const areas = useMemo(
-    () => Array.from(new Set(workers.map((w) => w.area))).sort(),
-    [workers],
-  );
+  const workerCountByArea = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const a of areas) counts[a] = 0;
+    for (const w of workers) counts[w.area] = (counts[w.area] ?? 0) + 1;
+    return counts;
+  }, [areas, workers]);
 
   const visibleWorkers = useMemo(() => {
     const active = workers.filter((w) => w.status === 'activo');
@@ -104,6 +123,28 @@ export default function App() {
     setShiftModal(null);
   };
 
+  const addArea = (name: string): string | void => {
+    const clean = name.trim();
+    if (!clean) return 'Escribe un nombre para la sección.';
+    if (areas.some((a) => a.toLowerCase() === clean.toLowerCase())) return 'Ya existe una sección con ese nombre.';
+    setAreas((prev) => [...prev, clean].sort());
+  };
+
+  // Si el nuevo nombre coincide con una sección ya existente, ambas quedan fusionadas
+  // (los trabajadores de "oldName" pasan a compartir la sección de igual nombre).
+  const renameArea = (oldName: string, newName: string): string | void => {
+    const clean = newName.trim();
+    if (!clean) return 'El nombre no puede quedar vacío.';
+    if (clean === oldName) return;
+    setWorkers((prev) => prev.map((w) => (w.area === oldName ? { ...w, area: clean } : w)));
+    setAreas((prev) => Array.from(new Set(prev.filter((a) => a !== oldName).concat(clean))).sort());
+  };
+
+  const deleteArea = (name: string) => {
+    if ((workerCountByArea[name] ?? 0) > 0) return;
+    setAreas((prev) => prev.filter((a) => a !== name));
+  };
+
   return (
     <div className="app">
       <header className="topbar no-print">
@@ -153,6 +194,7 @@ export default function App() {
             <button onClick={() => step(1)} aria-label="Siguiente">›</button>
           </div>
 
+          <button className="ghost" onClick={() => setAreaManagerOpen(true)}>Secciones</button>
           <button className="primary" onClick={() => setWorkerModal({ mode: 'new' })}>+ Trabajador</button>
           <button className="ghost" onClick={() => window.print()}>Imprimir</button>
         </div>
@@ -205,6 +247,19 @@ export default function App() {
             onSave={saveWorker}
             onDelete={workerModal.mode === 'edit' ? () => deleteWorker(workerModal.worker.id) : undefined}
             onClose={() => setWorkerModal(null)}
+          />
+        </Modal>
+      )}
+
+      {areaManagerOpen && (
+        <Modal title="Secciones" onClose={() => setAreaManagerOpen(false)}>
+          <AreaManager
+            areas={areas}
+            workerCounts={workerCountByArea}
+            onAdd={addArea}
+            onRename={renameArea}
+            onDelete={deleteArea}
+            onClose={() => setAreaManagerOpen(false)}
           />
         </Modal>
       )}

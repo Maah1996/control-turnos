@@ -35,7 +35,7 @@ export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props)
   const [fullName, setFullName] = useState(initial?.fullName ?? '');
   const [rut, setRut] = useState(initial?.rut ?? '');
   const [position, setPosition] = useState(initial?.position ?? '');
-  const [area, setArea] = useState(initial?.area ?? '');
+  const [area, setArea] = useState(initial?.area ?? areas[0] ?? '');
   const [contractType, setContractType] = useState<ContractType>(initial?.contractType ?? 'indefinido');
   const [weeklyHours, setWeeklyHours] = useState(initial?.weeklyHours ?? 42);
   const [status, setStatus] = useState<WorkerStatus>(initial?.status ?? 'activo');
@@ -78,15 +78,13 @@ export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props)
         </label>
         <label className="form-field">
           <span>Sección / Área *</span>
-          <input
-            value={area}
-            onChange={(e) => setArea(e.target.value)}
-            placeholder="Ej: Bodega"
-            list="areas-existentes"
-          />
-          <datalist id="areas-existentes">
-            {areas.map((a) => <option key={a} value={a} />)}
-          </datalist>
+          {areas.length > 0 ? (
+            <select value={area} onChange={(e) => setArea(e.target.value)}>
+              {areas.map((a) => <option key={a} value={a}>{a}</option>)}
+            </select>
+          ) : (
+            <input value="Crea una sección primero" disabled />
+          )}
         </label>
       </div>
 
