@@ -177,7 +177,28 @@ problema de layout/estructura de la grilla, no de paleta/tipografía — anotado
 
 **Archivos modificados:** `src/App.css`, `src/App.tsx`.
 
-**Confirmado en vivo por el usuario:** (pendiente — sesión en curso, falta que el usuario revise)
+**Confirmado en vivo por el usuario:** parcial — el usuario probó el link publicado y dijo que
+el Flat Design "no se veía bonito ni profesional" (se veía plano/genérico aunque el cambio de
+paleta/tipografía sí se notaba). Ver ajuste inmediato abajo.
+
+**Ajuste — mismo día, misma sesión:** se preguntó al usuario hacia qué dirección visual llevarlo
+(más premium con profundidad / más colorido / más denso-corporativo / que describa el problema)
+y eligió **"más premium con profundidad" (estilo Linear/Notion)**. Se consultó de nuevo el skill
+(`--domain style "premium dashboard soft elevation cards"`) y se aplicó el estilo
+**"Dimensional Layering"** que el skill recomienda para dashboards/SaaS: tarjeta principal
+flotando con sombra en vez de borde duro, rejilla solo con líneas horizontales (sin rejilla
+vertical), insignia circular verde para "hoy" (estilo Google Calendar), pestaña activa como
+píldora blanca flotante dentro de un contenedor gris, botones con sombra que reaccionan al
+hover, fila completa resaltada al pasar el mouse, leyenda como chips/píldoras. Misma paleta y
+tipografía de antes — solo cambió cómo se construye la profundidad/jerarquía visual. Commit
+`25aa0c3`, pusheado. Verificado en vivo (hover de fila, sin errores de consola).
+**Pendiente confirmación explícita del usuario sobre esta segunda iteración.**
+
+**Vista previa publicada (no es el deploy final):** se generó un build estático
+(`npm run vite build --base=./ --outDir dist-preview`, carpeta en `.gitignore`) y se publicó
+como Artifact de Claude para que el usuario lo viera sin depender del dev server local. Se
+republicó en el mismo link al aplicar el ajuste de profundidad. Esto es solo para revisión
+visual — no reemplaza el futuro deploy en Firebase Hosting.
 
 ---
 ---
