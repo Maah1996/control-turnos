@@ -34,33 +34,49 @@ El prompt maestro pedía **React + Vite + Supabase**. Se optó por **React + Vit
 
 ## ▶ PARA RETOMAR (leer esto al iniciar la próxima sesión)
 
-**Estado actual:** proyecto scaffolded (Vite + React + TS). Existe la pantalla de
-**Calendario de Turnos** con datos de ejemplo (mock) como semilla inicial, vistas
-semana/quincena/mes, filas por trabajador y columnas por día. Rediseño visual (paleta/
-tipografía/estilo, luego ajustado a más profundidad) hecho con el skill `ui-ux-pro-max`
-(sesión 2). **Ya se puede crear/editar trabajadores y asignar/editar/quitar turnos desde
-la pantalla** (sesión 2, ajuste 2) — persistido en `localStorage` del navegador. Sin
-backend todavía (sin Firebase, sin multiusuario, sin auditoría).
+**Estado actual (cierre de sesión 2, 16-sep-2026):** proyecto scaffolded (Vite + React + TS).
+La pantalla **Calendario de Turnos** ya es utilizable de punta a punta con datos reales del
+usuario (no solo mock): vistas semana/quincena/mes, rediseño visual con profundidad (skill
+`ui-ux-pro-max`), y CRUD completo desde la propia pantalla —
+- **Trabajadores:** crear/editar (botón "Trabajadores"), quitar de una fila del calendario
+  (los marca "Inactivo", NO los borra — siguen en "Trabajadores" y son reactivables),
+  eliminar de verdad solo desde dentro de "Trabajadores" o "Editar trabajador" (con aviso de
+  que es permanente).
+- **Secciones:** crear/renombrar/eliminar (botón "Secciones").
+- **Turnos:** asignar/editar/quitar por celda, con un desplegable de "Motivo" (Vacaciones,
+  Permiso, Licencia, Día libre + agregar otros) que llena el campo Notas.
+- **Filas del calendario:** cada fila tiene un desplegable para mostrar a cualquier
+  trabajador de la base (activo o inactivo) en esa posición, y "+ Agregar fila" para sumar
+  filas extra — todo sin duplicar ni perder turnos de nadie.
+Todo persistido en `localStorage` del navegador (por eso cada usuario/dispositivo ve datos
+distintos). Sin backend todavía (sin Firebase, sin multiusuario, sin auditoría real).
 
 **Siguiente sesión — hacer, en orden:**
-1. ~~Revisar en vivo la grilla del calendario y confirmar diseño/legibilidad del "mural".~~ Hecho.
-2. ~~Edición individual de celda (panel: turno, hora inicio/término, colación, notas).~~ Hecho
-   — falta el flujo de **borrador + Guardar con resumen** (ahora cada guardado es directo,
-   sin paso intermedio de confirmación de lote).
-3. ABM de trabajadores: falta edición **masiva** (seleccionar varias filas y cambiar en bloque),
-   e importación desde Excel/CSV — hoy solo hay alta/edición/baja individual.
+1. Confirmación explícita del usuario de que el flujo completo (crear trabajador → asignar
+   turno → quitar/reactivar → motivo) le sirve para uso real, antes de seguir sumando cosas.
+2. Flujo de **borrador + Guardar con resumen** (hoy cada guardado es directo e inmediato, sin
+   confirmación de lote — ver DECISIONES 2026-09-16).
+3. ABM de trabajadores: falta edición **masiva** (seleccionar varias filas y cambiar en
+   bloque) e importación desde Excel/CSV — hoy solo hay alta/edición/baja individual.
 4. Selector de rango personalizado (hoy: semana / quincena / mes fijos).
-5. Arreglar superposición de chips en vista Mes (columnas muy angostas, `table-layout: fixed`).
+5. Arreglar superposición de chips en vista **Mes** (columnas muy angostas,
+   `table-layout: fixed`) — detectado en sesión 2, nunca corregido, sigue pendiente.
 6. Recién después: crear proyecto Firebase + migrar `localStorage` a Firestore + auditoría real.
-6. (Menor, detectado en la sesión 2) En vista **Mes** los chips de turno se amontonan/superponen
-   por lo angosto de cada columna de día — no se tocó porque no era parte del pedido de esta
-   sesión (rediseño visual); ajustar cuando se retome la grilla.
 
 **Pendientes de fondo (no bloquean, anotados para no olvidar):**
 - Definir si el registro de asistencia será "registro oficial" (estándar RCE de la Dirección
   del Trabajo) o solo herramienta interna de gestión.
 - Confirmar con asesoría laboral los umbrales de `labor_rules` antes de darlos por válidos.
-- Script `bitacora_md_a_pdf.py` para llevar la bitácora también en PDF.
+- Reemplazar el `window.confirm`/`alert` que puedan quedar (revisar si queda alguno) por
+  diálogos propios — el de eliminar trabajador ya se corrigió (ver ajuste 6), motivado porque
+  esos diálogos nativos no se muestran dentro del iframe del link de Artifact.
+- Mensaje de éxito visible tras Guardar (hoy la única confirmación es que el modal se cierra
+  y el cambio se ve reflejado en la grilla).
+- El link de vista previa (Artifact) usa un build estático aparte (`dist-preview/`, en
+  `.gitignore`) — regenerar con `npx vite build --base=./ --outDir dist-preview` y republicar
+  cada vez que se quiera mostrar el estado más reciente ahí; el repo de GitHub es la fuente
+  real de verdad del código.
+- Script `bitacora_md_a_pdf.py` para llevar la bitácora también en PDF (no existe todavía).
 
 ---
 
