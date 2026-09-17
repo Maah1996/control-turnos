@@ -501,6 +501,13 @@ calendario, siempre debe verse en el desplegable*. Corregido:
 
 **Archivos modificados (ajuste 12):** `src/App.tsx`, `src/components/CalendarGrid.tsx`.
 
+**Ajuste 13 — mismo día: quitar el sufijo "(inactivo)" del desplegable.** El usuario pidió que
+el desplegable muestre solo el nombre, sin la etiqueta agregada en el ajuste 12. Se quitó el
+sufijo en `CalendarGrid.tsx` — el desplegable sigue incluyendo a todos (activos e inactivos,
+ver ajuste 12), solo que ahora sin marcarlo en el texto de la opción. `tsc -b` sin errores.
+
+**Archivos modificados (ajuste 13):** `src/components/CalendarGrid.tsx`.
+
 ---
 ---
 
