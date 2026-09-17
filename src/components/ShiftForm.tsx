@@ -6,18 +6,38 @@ interface Props {
   workerName: string;
   dateLabel: string;
   shiftTypes: ShiftType[];
+  motivos: string[];
+  onAddMotivo: (name: string) => void;
   initial?: ScheduledShift;
   onSave: (shift: Pick<ScheduledShift, 'shiftTypeId' | 'start' | 'end' | 'breakMinutes' | 'notes'>) => void;
   onDelete?: () => void;
   onClose: () => void;
 }
 
-export function ShiftForm({ workerName, dateLabel, shiftTypes, initial, onSave, onDelete, onClose }: Props) {
+export function ShiftForm({
+  workerName, dateLabel, shiftTypes, motivos, onAddMotivo, initial, onSave, onDelete, onClose,
+}: Props) {
   const [shiftTypeId, setShiftTypeId] = useState(initial?.shiftTypeId ?? shiftTypes[0]?.id ?? '');
   const [start, setStart] = useState(initial?.start ?? shiftTypes[0]?.defaultStart ?? '08:00');
   const [end, setEnd] = useState(initial?.end ?? shiftTypes[0]?.defaultEnd ?? '16:30');
   const [breakMinutes, setBreakMinutes] = useState(initial?.breakMinutes ?? shiftTypes[0]?.defaultBreakMinutes ?? 30);
   const [notes, setNotes] = useState(initial?.notes ?? '');
+  const [addingMotivo, setAddingMotivo] = useState(false);
+  const [newMotivo, setNewMotivo] = useState('');
+
+  const selectMotivo = (value: string) => {
+    if (value === '__add__') { setAddingMotivo(true); return; }
+    if (value) setNotes(value);
+  };
+
+  const confirmNewMotivo = () => {
+    const clean = newMotivo.trim();
+    if (!clean) { setAddingMotivo(false); return; }
+    onAddMotivo(clean);
+    setNotes(clean);
+    setNewMotivo('');
+    setAddingMotivo(false);
+  };
 
   const applyType = (id: string) => {
     setShiftTypeId(id);
@@ -68,8 +88,30 @@ export function ShiftForm({ workerName, dateLabel, shiftTypes, initial, onSave, 
       </div>
 
       <label className="form-field">
+        <span>Motivo (opcional)</span>
+        <select value="" onChange={(e) => selectMotivo(e.target.value)}>
+          <option value="">— Elegir un motivo rápido —</option>
+          {motivos.map((m) => <option key={m} value={m}>{m}</option>)}
+          <option value="__add__">+ Agregar opción nueva…</option>
+        </select>
+      </label>
+
+      {addingMotivo && (
+        <div className="area-add-row">
+          <input
+            value={newMotivo}
+            onChange={(e) => setNewMotivo(e.target.value)}
+            placeholder="Ej: Capacitación"
+            autoFocus
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); confirmNewMotivo(); } }}
+          />
+          <button type="button" className="primary" onClick={confirmNewMotivo}>Agregar</button>
+        </div>
+      )}
+
+      <label className="form-field">
         <span>Notas (opcional)</span>
-        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ej: reemplazo, turno partido…" />
+        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ej: reemplazo, turno partido, vacaciones…" />
       </label>
 
       <div className="form-actions">

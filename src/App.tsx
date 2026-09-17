@@ -36,6 +36,9 @@ export default function App() {
   const [areas, setAreas] = useState<string[]>(
     () => loadJSON(STORAGE_KEYS.areas, Array.from(new Set(WORKERS.map((w) => w.area))).sort()),
   );
+  const [motivos, setMotivos] = useState<string[]>(
+    () => loadJSON(STORAGE_KEYS.motivos, ['Vacaciones', 'Permiso', 'Licencia', 'Día libre']),
+  );
 
   const [workerModal, setWorkerModal] = useState<WorkerModalState>(null);
   const [shiftModal, setShiftModal] = useState<ShiftModalState>(null);
@@ -56,6 +59,7 @@ export default function App() {
   useEffect(() => saveJSON(STORAGE_KEYS.workers, workers), [workers]);
   useEffect(() => saveJSON(STORAGE_KEYS.shifts, shifts), [shifts]);
   useEffect(() => saveJSON(STORAGE_KEYS.areas, areas), [areas]);
+  useEffect(() => saveJSON(STORAGE_KEYS.motivos, motivos), [motivos]);
 
   // Si algún trabajador quedó con una sección que ya no está en la lista administrada
   // (datos antiguos, o cambios hechos fuera de esta pantalla), se reincorpora sola.
@@ -203,6 +207,12 @@ export default function App() {
     if (!shiftModal?.shift) return;
     setShifts((prev) => prev.filter((s) => s.id !== shiftModal.shift!.id));
     setShiftModal(null);
+  };
+
+  const addMotivo = (name: string) => {
+    const clean = name.trim();
+    if (!clean) return;
+    setMotivos((prev) => (prev.some((m) => m.toLowerCase() === clean.toLowerCase()) ? prev : [...prev, clean]));
   };
 
   const addArea = (name: string): string | void => {
@@ -374,6 +384,8 @@ export default function App() {
             workerName={workers.find((w) => w.id === shiftModal.workerId)?.fullName ?? ''}
             dateLabel={fmtLong(fromISO(shiftModal.iso))}
             shiftTypes={SHIFT_TYPES}
+            motivos={motivos}
+            onAddMotivo={addMotivo}
             initial={shiftModal.shift}
             onSave={saveShift}
             onDelete={shiftModal.shift ? deleteShift : undefined}

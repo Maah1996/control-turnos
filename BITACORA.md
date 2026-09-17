@@ -508,6 +508,30 @@ ver ajuste 12), solo que ahora sin marcarlo en el texto de la opción. `tsc -b` 
 
 **Archivos modificados (ajuste 13):** `src/components/CalendarGrid.tsx`.
 
+**Ajuste 14 — mismo día: desplegable de "Motivo" en el turno (Vacaciones/Permiso/Licencia/
+Día libre + agregar otros).** El usuario pidió que el campo "Notas (opcional)" del turno
+tuviera un desplegable con esas 4 opciones y una forma de agregar otras ahí mismo. Se
+implementó como una lista persistida y administrable, con el mismo patrón que ya usan
+Secciones/Trabajadores (autocontenido, sin pantalla aparte esta vez porque el pedido era
+"ahí mismo"):
+- `src/lib/storage.ts`: nueva clave `turnos_motivos_v1`.
+- `App.tsx`: estado `motivos` sembrado con `['Vacaciones', 'Permiso', 'Licencia', 'Día
+  libre']`, persistido; `addMotivo(name)` agrega uno nuevo (evita duplicados, sin distinguir
+  mayúsculas). Se pasa a `ShiftForm` junto con la función para agregar.
+- `src/components/ShiftForm.tsx`: nuevo campo "Motivo (opcional)" — un `<select>` con la
+  lista + la opción "+ Agregar opción nueva…" al final. Elegir un motivo llena el campo
+  "Notas" de abajo con ese texto (no es un campo aparte en el modelo de datos — sigue siendo
+  el mismo `notes` de `ScheduledShift`, solo que ahora hay una forma rápida de completarlo).
+  Elegir "+ Agregar opción nueva…" despliega un input en línea (mismo estilo que "+ Agregar"
+  de Secciones) para escribir y guardar la opción nueva, que queda disponible en todos los
+  turnos de ahí en adelante.
+- Verificado en vivo: elegir "Vacaciones" → Notas se llena con "Vacaciones" → agregar
+  "Reunión de equipo" como opción nueva → queda guardada en `turnos_motivos_v1` y el campo
+  Notas se llena con ella. `tsc -b` sin errores, sin errores de consola.
+
+**Archivos modificados (ajuste 14):** `src/lib/storage.ts`, `src/App.tsx`,
+`src/components/ShiftForm.tsx`.
+
 ---
 ---
 
