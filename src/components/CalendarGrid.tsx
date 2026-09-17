@@ -2,6 +2,7 @@ import type { ScheduledShift, ShiftType, Worker } from '../types';
 import {
   dayShort, fmtHours, isSameDay, isWeekend, minutesBetween, toISO,
 } from '../lib/dates';
+import { MOTIVO_PREFIX } from './ShiftForm';
 
 interface Props {
   days: Date[];
@@ -9,6 +10,7 @@ interface Props {
   allWorkers: Worker[];
   shifts: ScheduledShift[];
   shiftTypes: ShiftType[];
+  motivos: string[];
   today: Date;
   onCellClick?: (workerId: string, iso: string) => void;
   onShiftClick?: (shift: ScheduledShift) => void;
@@ -19,11 +21,18 @@ interface Props {
   canAddRow?: boolean;
 }
 
+const MOTIVO_COLOR = '#64748b';
+
 export function CalendarGrid({
-  days, workers, allWorkers, shifts, shiftTypes, today,
+  days, workers, allWorkers, shifts, shiftTypes, motivos, today,
   onCellClick, onShiftClick, onWorkerClick, onDeleteWorker, onRowWorkerChange, onAddRow, canAddRow,
 }: Props) {
-  const typeById = new Map(shiftTypes.map((t) => [t.id, t]));
+  const motivoTypes: ShiftType[] = motivos.map((m) => ({
+    id: MOTIVO_PREFIX + m, name: m, code: m.slice(0, 3).toUpperCase(),
+    defaultStart: '00:00', defaultEnd: '00:00', crossesMidnight: false,
+    defaultBreakMinutes: 0, color: MOTIVO_COLOR,
+  }));
+  const typeById = new Map([...shiftTypes, ...motivoTypes].map((t) => [t.id, t]));
 
   const shiftsFor = (workerId: string, iso: string) =>
     shifts.filter((s) => s.workerId === workerId && s.date === iso && s.status !== 'anulado');
@@ -123,6 +132,7 @@ export function CalendarGrid({
                   >
                     {cellShifts.map((s) => {
                       const t = typeById.get(s.shiftTypeId);
+                      const isMotivo = s.shiftTypeId.startsWith(MOTIVO_PREFIX);
                       const mins = minutesBetween(s.start, s.end) - s.breakMinutes;
                       return (
                         <button
@@ -130,12 +140,20 @@ export function CalendarGrid({
                           type="button"
                           className="chip"
                           style={{ ['--chip' as string]: t?.color ?? '#888' }}
-                          title={`${t?.name ?? ''} ${s.start}–${s.end} · colación ${s.breakMinutes} min — clic para editar`}
+                          title={isMotivo
+                            ? `${t?.name ?? ''} — clic para editar`
+                            : `${t?.name ?? ''} ${s.start}–${s.end} · colación ${s.breakMinutes} min — clic para editar`}
                           onClick={(e) => { e.stopPropagation(); onShiftClick?.(s); }}
                         >
-                          <span className="chip-code">{t?.code}</span>
-                          <span className="chip-time">{s.start}–{s.end}</span>
-                          <span className="chip-net">{fmtHours(mins)}</span>
+                          {isMotivo ? (
+                            <span className="chip-motivo">{t?.name}</span>
+                          ) : (
+                            <>
+                              <span className="chip-code">{t?.code}</span>
+                              <span className="chip-time">{s.start}–{s.end}</span>
+                              <span className="chip-net">{fmtHours(mins)}</span>
+                            </>
+                          )}
                         </button>
                       );
                     })}

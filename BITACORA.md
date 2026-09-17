@@ -548,6 +548,32 @@ Secciones/Trabajadores (autocontenido, sin pantalla aparte esta vez porque el pe
 **Archivos modificados (ajuste 14):** `src/lib/storage.ts`, `src/App.tsx`,
 `src/components/ShiftForm.tsx`.
 
+**Ajuste 15 — mismo día: el Motivo se fusionó dentro de "Tipo de turno".** El usuario pidió
+que, al elegir un motivo, la opción quede disponible **arriba, en "Tipo de turno"**, en vez
+de horas — y que la celda del calendario muestre el texto del motivo (ej. "Día libre") en
+vez de un horario. Se fusionaron ambos controles en uno solo:
+- `ShiftForm.tsx`: el select "Tipo de turno" ahora tiene dos grupos (`<optgroup>`): "Turno de
+  trabajo" (Mañana/Tarde/Noche, igual que antes) y "Ausencia" (los `motivos` guardados +
+  "+ Agregar motivo nuevo…", con el mismo input en línea de antes). Se quitó el select
+  "Motivo (opcional)" aparte — ya no hace falta, quedó unificado. Un motivo se guarda como
+  `shiftTypeId = "motivo:" + nombre` (export `MOTIVO_PREFIX`) en vez de crear un modelo de
+  datos nuevo; al elegirlo se autocompletan hora inicio/término en `00:00`, colación en `0`,
+  Notas con el nombre del motivo, y **se ocultan** los campos de horario/colación (no
+  aplican a un día de ausencia).
+- `CalendarGrid.tsx`: reconoce el prefijo `motivo:` y arma sobre la marcha un "tipo" liviano
+  para cada motivo (color gris neutro `#64748b`, sin horario) — así el mismo `typeById` sirve
+  para ambos casos sin tocar `SHIFT_TYPES`. La celda muestra el **nombre del motivo en texto
+  plano** (`chip-motivo`) en vez de código+horario+horas netas.
+- Las horas de un día con motivo valen `0` automáticamente (mismo cálculo de `minutesBetween`
+  con `00:00`–`00:00`), así que el total semanal del trabajador baja correctamente ese día.
+- Verificado en vivo: elegir "Día libre" en Tipo de turno de un lunes → desaparecen los campos
+  de horario → Notas se llena sola con "Día libre" → Guardar → la celda del lunes muestra
+  "Día libre" en texto plano → el total semanal de esa persona bajó de 40h a 32h. `tsc -b`
+  sin errores, sin errores de consola.
+
+**Archivos modificados (ajuste 15):** `src/components/ShiftForm.tsx`,
+`src/components/CalendarGrid.tsx`, `src/App.tsx`, `src/App.css`.
+
 ---
 ---
 

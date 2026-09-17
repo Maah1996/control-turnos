@@ -14,6 +14,10 @@ interface Props {
   onClose: () => void;
 }
 
+// Un "tipo de turno" de ausencia se guarda con este prefijo en el mismo shiftTypeId
+// (en vez de crear un modelo de datos aparte) — CalendarGrid lo reconoce igual.
+export const MOTIVO_PREFIX = 'motivo:';
+
 export function ShiftForm({
   workerName, dateLabel, shiftTypes, motivos, onAddMotivo, initial, onSave, onDelete, onClose,
 }: Props) {
@@ -25,28 +29,38 @@ export function ShiftForm({
   const [addingMotivo, setAddingMotivo] = useState(false);
   const [newMotivo, setNewMotivo] = useState('');
 
-  const selectMotivo = (value: string) => {
-    if (value === '__add__') { setAddingMotivo(true); return; }
-    if (value) setNotes(value);
+  const isMotivo = shiftTypeId.startsWith(MOTIVO_PREFIX);
+
+  const applyMotivo = (name: string) => {
+    setShiftTypeId(MOTIVO_PREFIX + name);
+    setStart('00:00');
+    setEnd('00:00');
+    setBreakMinutes(0);
+    setNotes(name);
+  };
+
+  const applyType = (value: string) => {
+    if (value === '__add_motivo__') { setAddingMotivo(true); return; }
+    if (value.startsWith(MOTIVO_PREFIX)) {
+      applyMotivo(value.slice(MOTIVO_PREFIX.length));
+      return;
+    }
+    setShiftTypeId(value);
+    const t = shiftTypes.find((s) => s.id === value);
+    if (t) {
+      setStart(t.defaultStart);
+      setEnd(t.defaultEnd);
+      setBreakMinutes(t.defaultBreakMinutes);
+    }
   };
 
   const confirmNewMotivo = () => {
     const clean = newMotivo.trim();
     if (!clean) { setAddingMotivo(false); return; }
     onAddMotivo(clean);
-    setNotes(clean);
+    applyMotivo(clean);
     setNewMotivo('');
     setAddingMotivo(false);
-  };
-
-  const applyType = (id: string) => {
-    setShiftTypeId(id);
-    const t = shiftTypes.find((s) => s.id === id);
-    if (t) {
-      setStart(t.defaultStart);
-      setEnd(t.defaultEnd);
-      setBreakMinutes(t.defaultBreakMinutes);
-    }
   };
 
   const submit = (e: FormEvent) => {
@@ -63,36 +77,17 @@ export function ShiftForm({
       <label className="form-field">
         <span>Tipo de turno</span>
         <select value={shiftTypeId} onChange={(e) => applyType(e.target.value)}>
-          {shiftTypes.map((t) => (
-            <option key={t.id} value={t.id}>{t.name} ({t.defaultStart}–{t.defaultEnd})</option>
-          ))}
-        </select>
-      </label>
-
-      <div className="form-row">
-        <label className="form-field">
-          <span>Hora inicio</span>
-          <input type="time" value={start} onChange={(e) => setStart(e.target.value)} />
-        </label>
-        <label className="form-field">
-          <span>Hora término</span>
-          <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} />
-        </label>
-        <label className="form-field">
-          <span>Colación (min)</span>
-          <input
-            type="number" min={0} max={120} step={5}
-            value={breakMinutes} onChange={(e) => setBreakMinutes(Number(e.target.value))}
-          />
-        </label>
-      </div>
-
-      <label className="form-field">
-        <span>Motivo (opcional)</span>
-        <select value="" onChange={(e) => selectMotivo(e.target.value)}>
-          <option value="">— Elegir un motivo rápido —</option>
-          {motivos.map((m) => <option key={m} value={m}>{m}</option>)}
-          <option value="__add__">+ Agregar opción nueva…</option>
+          <optgroup label="Turno de trabajo">
+            {shiftTypes.map((t) => (
+              <option key={t.id} value={t.id}>{t.name} ({t.defaultStart}–{t.defaultEnd})</option>
+            ))}
+          </optgroup>
+          <optgroup label="Ausencia">
+            {motivos.map((m) => (
+              <option key={m} value={MOTIVO_PREFIX + m}>{m}</option>
+            ))}
+            <option value="__add_motivo__">+ Agregar motivo nuevo…</option>
+          </optgroup>
         </select>
       </label>
 
@@ -109,9 +104,29 @@ export function ShiftForm({
         </div>
       )}
 
+      {!isMotivo && (
+        <div className="form-row">
+          <label className="form-field">
+            <span>Hora inicio</span>
+            <input type="time" value={start} onChange={(e) => setStart(e.target.value)} />
+          </label>
+          <label className="form-field">
+            <span>Hora término</span>
+            <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} />
+          </label>
+          <label className="form-field">
+            <span>Colación (min)</span>
+            <input
+              type="number" min={0} max={120} step={5}
+              value={breakMinutes} onChange={(e) => setBreakMinutes(Number(e.target.value))}
+            />
+          </label>
+        </div>
+      )}
+
       <label className="form-field">
         <span>Notas (opcional)</span>
-        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ej: reemplazo, turno partido, vacaciones…" />
+        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ej: reemplazo, turno partido…" />
       </label>
 
       <div className="form-actions">

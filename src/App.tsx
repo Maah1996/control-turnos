@@ -314,6 +314,7 @@ export default function App() {
           allWorkers={allWorkersSorted}
           shifts={shifts}
           shiftTypes={SHIFT_TYPES}
+          motivos={motivos}
           today={HOY}
           onCellClick={(workerId, iso) => setShiftModal({ workerId, iso })}
           onShiftClick={(shift) => setShiftModal({ workerId: shift.workerId, iso: shift.date, shift })}
