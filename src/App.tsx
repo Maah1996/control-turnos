@@ -89,6 +89,14 @@ export default function App() {
     [workers],
   );
 
+  // Para el desplegable "Cambiar el trabajador de esta fila": debe listar a TODOS, incluidos
+  // los inactivos — es justamente la forma de volver a traer a alguien que se quitó del
+  // calendario, sin tener que ir a "Trabajadores" a reactivarlo primero.
+  const allWorkersSorted = useMemo(
+    () => [...workers].sort((a, b) => a.fullName.localeCompare(b.fullName, 'es')),
+    [workers],
+  );
+
   const visibleWorkers = useMemo(() => {
     if (scope === 'todos') return activeWorkers;
     return activeWorkers.filter((w) => w.area === scope);
@@ -112,8 +120,8 @@ export default function App() {
   useEffect(() => { setRowOverrides({}); setExtraRows([]); }, [scope]);
 
   const addExtraRow = () => {
-    if (activeWorkers.length === 0) return;
-    setExtraRows((prev) => [...prev, activeWorkers[0].id]);
+    if (allWorkersSorted.length === 0) return;
+    setExtraRows((prev) => [...prev, allWorkersSorted[0].id]);
   };
 
   const handleRowWorkerChange = (rowIndex: number, newWorkerId: string) => {
@@ -293,7 +301,7 @@ export default function App() {
         <CalendarGrid
           days={days}
           workers={displayedWorkers}
-          allWorkers={activeWorkers}
+          allWorkers={allWorkersSorted}
           shifts={shifts}
           shiftTypes={SHIFT_TYPES}
           today={HOY}
@@ -306,7 +314,7 @@ export default function App() {
           onDeleteWorker={handleRowDelete}
           onRowWorkerChange={handleRowWorkerChange}
           onAddRow={addExtraRow}
-          canAddRow={activeWorkers.length > 0}
+          canAddRow={allWorkersSorted.length > 0}
         />
 
         <footer className="sheet-foot">

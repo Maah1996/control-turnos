@@ -89,7 +89,9 @@ export function CalendarGrid({
                       onChange={(e) => { e.stopPropagation(); onRowWorkerChange?.(rowIndex, e.target.value); }}
                     >
                       {allWorkers.map((opt) => (
-                        <option key={opt.id} value={opt.id}>{opt.fullName}</option>
+                        <option key={opt.id} value={opt.id}>
+                          {opt.fullName}{opt.status !== 'activo' ? ' (inactivo)' : ''}
+                        </option>
                       ))}
                     </select>
                   </label>

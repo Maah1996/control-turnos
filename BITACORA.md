@@ -479,6 +479,28 @@ acciones, que hasta ahora compartían la misma función por error:
 **Archivos nuevos:** ninguno.
 **Archivos modificados (ajuste 11):** `src/App.tsx`, `src/components/ConfirmDialog.tsx`.
 
+**Ajuste 12 — mismo día: el desplegable también debe listar a los inactivos.** Consecuencia
+directa del ajuste 11: el usuario recreó a "Luis Moraga Márquez" pero notó que no aparecía en
+el desplegable de ninguna fila. Causa: el desplegable ("Cambiar el trabajador de esta fila")
+armaba sus opciones con `activeWorkers` (solo `status === 'activo'`) — si alguien quedaba
+inactivo (por el nuevo flujo "Quitar del calendario" del ajuste 11, o por cualquier otro
+motivo), dejaba de poder elegirse ahí, justo la única herramienta pensada para traerlo de
+vuelta sin pasar por "Trabajadores". El usuario lo dejó explícito: *si borro una línea del
+calendario, siempre debe verse en el desplegable*. Corregido:
+- `App.tsx`: nuevo `allWorkersSorted` (todos los trabajadores, cualquier estado, orden
+  alfabético) reemplaza a `activeWorkers` como fuente del desplegable y como base de
+  "+ Agregar fila" (`addExtraRow`, `canAddRow`) — `activeWorkers` se mantiene igual que antes
+  para las filas "normales" del filtro Alcance (esas sí deben ser solo activos).
+- `CalendarGrid.tsx`: las opciones de trabajadores inactivos se marcan con el sufijo
+  "(inactivo)" en el propio texto de la opción, para no confundirlos con los activos.
+- Verificado en vivo: quitar a Rosa Elena Mansilla de su fila (queda "Inactivo") → su nombre
+  sigue apareciendo en el desplegable de TODAS las filas como "Rosa Elena Mansilla
+  (inactivo)" → elegirla ahí → la fila muestra sus turnos NOC y horas reales de siempre, sin
+  necesidad de pasar por "Trabajadores" para reactivarla primero. `tsc -b` sin errores, sin
+  errores de consola.
+
+**Archivos modificados (ajuste 12):** `src/App.tsx`, `src/components/CalendarGrid.tsx`.
+
 ---
 ---
 
