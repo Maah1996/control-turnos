@@ -442,6 +442,43 @@ funcionaba "+ Nuevo trabajador" ahí). Verificado en vivo, sin errores de consol
 
 **Archivos modificados (ajuste 10):** `src/App.tsx`.
 
+**Ajuste 11 — mismo día: BUG grave corregido — el ícono de la fila borraba de verdad.** El
+usuario reportó que había agregado a su primer trabajador real ("Luis Moraga Márquez") y que
+después desapareció también del desplegable — es decir, del "banco de datos", no solo de la
+vista. Causa real: el ícono de papelera de cada fila del calendario (agregado en la sesión 2,
+ajuste 4) llamaba a `deleteWorker`, el mismo borrado **permanente** que usa "Trabajadores"
+— quitaba al trabajador del arreglo `workers` y borraba todos sus turnos, sin aviso de que
+era irreversible. El usuario dejó explícito el criterio correcto: *borrar una fila del
+calendario nunca debe hacer desaparecer a alguien de la base de datos*. Se separaron las dos
+acciones, que hasta ahora compartían la misma función por error:
+- **Ícono de papelera en una fila normal del calendario** → ya NO borra. Abre un diálogo
+  nuevo ("Quitar del calendario", botón azul no-destructivo) que, al confirmar, solo cambia
+  el `status` del trabajador a `'inactivo'` — sigue completo en `workers`, con todos sus
+  turnos intactos, visible en "Trabajadores" (con la etiqueta "Inactivo") y reactivable ahí
+  mismo (editar → Estado → Activo) en cualquier momento.
+- **Botón "Eliminar" dentro de "Trabajadores"** y **"Eliminar trabajador" dentro de "Editar
+  trabajador"** siguen siendo el borrado real y permanente (`deleteWorker`, con su propio
+  diálogo en rojo que ahora aclara "PERMANENTEMENTE… no se puede deshacer") — quedan como las
+  únicas dos puertas para un borrado de verdad, ambas alcanzadas por una acción deliberada,
+  no por un clic suelto en el mural.
+- `src/components/ConfirmDialog.tsx`: nuevo prop `danger` (default `true`) para que el botón
+  de confirmar no se vea rojo/alarmante cuando la acción no es destructiva.
+- Filas extra (`+ Agregar fila`) no cambiaron: su ícono de papelera ya solo quitaba el
+  "espacio" sin tocar al trabajador, ese comportamiento ya era el correcto.
+- Verificado en vivo, extremo a extremo: quitar a Rosa Elena Mansilla de una fila normal →
+  desaparece del calendario y del desplegable → sigue en "Trabajadores" como "Inactivo" con
+  sus datos completos → Editar → Estado → Activo → Guardar → reaparece en el calendario con
+  **los mismos turnos NOC de antes**, intactos. `tsc -b` sin errores, sin errores de consola.
+- **Nota para el usuario, importante:** este bug ya estaba desde el ajuste 4 (sesión 2). Si
+  "Luis Moraga Márquez" fue borrado con el ícono de la fila antes de este arreglo, quedó
+  eliminado de verdad — esa pérdida de datos no se puede recuperar desde acá (vive solo en el
+  `localStorage` del navegador del usuario, no accesible desde esta sesión). Hay que volver a
+  crearlo con "Trabajadores → + Nuevo trabajador". De ahora en adelante no puede volver a
+  pasar por este mismo camino.
+
+**Archivos nuevos:** ninguno.
+**Archivos modificados (ajuste 11):** `src/App.tsx`, `src/components/ConfirmDialog.tsx`.
+
 ---
 ---
 

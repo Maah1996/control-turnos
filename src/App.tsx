@@ -42,6 +42,9 @@ export default function App() {
   const [areaManagerOpen, setAreaManagerOpen] = useState(false);
   const [workerManagerOpen, setWorkerManagerOpen] = useState(false);
   const [confirmDeleteWorkerId, setConfirmDeleteWorkerId] = useState<string | null>(null);
+  // Distinto del anterior: esto NO borra al trabajador, solo lo marca "inactivo" para que
+  // deje de aparecer en el calendario. Sigue completo en "Trabajadores" y se puede reactivar.
+  const [confirmRemoveWorkerId, setConfirmRemoveWorkerId] = useState<string | null>(null);
   // Permite reemplazar, fila por fila, a qué trabajador de la base se está mirando —
   // sin tocar los turnos reales de nadie. Se reinicia si cambia el filtro de Alcance,
   // porque ahí cambia de raíz qué trabajadores corresponden a cada fila.
@@ -131,7 +134,16 @@ export default function App() {
       setExtraRows((prev) => prev.filter((_, i) => i !== rowIndex - visibleWorkers.length));
       return;
     }
-    deleteWorker(workerId);
+    // El ícono de la fila del calendario NUNCA borra a nadie de la base — solo lo saca de
+    // esta vista. El borrado real y permanente vive únicamente en "Trabajadores".
+    setConfirmRemoveWorkerId(workerId);
+  };
+
+  const confirmRemoveFromView = () => {
+    if (!confirmRemoveWorkerId) return;
+    const id = confirmRemoveWorkerId;
+    setWorkers((prev) => prev.map((w) => (w.id === id ? { ...w, status: 'inactivo' } : w)));
+    setConfirmRemoveWorkerId(null);
   };
 
   const step = (dir: number) => {
@@ -365,9 +377,20 @@ export default function App() {
       {confirmDeleteWorkerId && (
         <ConfirmDialog
           title="Eliminar trabajador"
-          message={`¿Eliminar a ${workers.find((w) => w.id === confirmDeleteWorkerId)?.fullName ?? 'este trabajador'}? También se quitarán sus turnos asignados.`}
+          message={`¿Eliminar PERMANENTEMENTE a ${workers.find((w) => w.id === confirmDeleteWorkerId)?.fullName ?? 'este trabajador'}? También se borrarán sus turnos. Esto no se puede deshacer.`}
           onConfirm={confirmDeleteWorker}
           onCancel={() => setConfirmDeleteWorkerId(null)}
+        />
+      )}
+
+      {confirmRemoveWorkerId && (
+        <ConfirmDialog
+          title="Quitar del calendario"
+          message={`¿Quitar a ${workers.find((w) => w.id === confirmRemoveWorkerId)?.fullName ?? 'este trabajador'} de esta vista? Sigue guardado en "Trabajadores" (marcado como inactivo) y puedes reactivarlo cuando quieras.`}
+          confirmLabel="Quitar de la vista"
+          danger={false}
+          onConfirm={confirmRemoveFromView}
+          onCancel={() => setConfirmRemoveWorkerId(null)}
         />
       )}
     </div>
