@@ -46,6 +46,9 @@ export default function App() {
   // sin tocar los turnos reales de nadie. Se reinicia si cambia el filtro de Alcance,
   // porque ahí cambia de raíz qué trabajadores corresponden a cada fila.
   const [rowOverrides, setRowOverrides] = useState<Record<number, string>>({});
+  // Filas agregadas a mano con "+ Agregar fila" — cada elemento es el id del trabajador
+  // elegido en esa fila extra. Se reinicia junto con rowOverrides al cambiar el Alcance.
+  const [extraRows, setExtraRows] = useState<string[]>([]);
 
   useEffect(() => saveJSON(STORAGE_KEYS.workers, workers), [workers]);
   useEffect(() => saveJSON(STORAGE_KEYS.shifts, shifts), [shifts]);
@@ -89,17 +92,47 @@ export default function App() {
   }, [activeWorkers, scope]);
 
   // El filtro de Alcance define, por defecto, quién va en cada fila; un cambio manual
-  // por fila (rowOverrides) lo reemplaza sin mover los turnos de nadie.
-  const displayedWorkers = useMemo(
-    () => visibleWorkers.map((w, i) => {
+  // por fila (rowOverrides) lo reemplaza sin mover los turnos de nadie. "extraRows" son
+  // filas agregadas a mano con "+ Agregar fila" (van después de las del filtro).
+  const displayedWorkers = useMemo(() => {
+    const base = visibleWorkers.map((w, i) => {
       const overrideId = rowOverrides[i];
       if (!overrideId) return w;
       return workers.find((x) => x.id === overrideId) ?? w;
-    }),
-    [visibleWorkers, rowOverrides, workers],
-  );
+    });
+    const extra = extraRows
+      .map((id) => workers.find((x) => x.id === id))
+      .filter((w): w is Worker => Boolean(w));
+    return [...base, ...extra];
+  }, [visibleWorkers, rowOverrides, extraRows, workers]);
 
-  useEffect(() => setRowOverrides({}), [scope]);
+  useEffect(() => { setRowOverrides({}); setExtraRows([]); }, [scope]);
+
+  const addExtraRow = () => {
+    if (activeWorkers.length === 0) return;
+    setExtraRows((prev) => [...prev, activeWorkers[0].id]);
+  };
+
+  const handleRowWorkerChange = (rowIndex: number, newWorkerId: string) => {
+    if (rowIndex >= visibleWorkers.length) {
+      setExtraRows((prev) => {
+        const next = [...prev];
+        next[rowIndex - visibleWorkers.length] = newWorkerId;
+        return next;
+      });
+      return;
+    }
+    setRowOverrides((prev) => ({ ...prev, [rowIndex]: newWorkerId }));
+  };
+
+  const handleRowDelete = (workerId: string, rowIndex: number) => {
+    if (rowIndex >= visibleWorkers.length) {
+      // Fila agregada a mano: se quita solo el "espacio" extra, no se borra al trabajador real.
+      setExtraRows((prev) => prev.filter((_, i) => i !== rowIndex - visibleWorkers.length));
+      return;
+    }
+    deleteWorker(workerId);
+  };
 
   const step = (dir: number) => {
     if (view === 'mes') {
@@ -259,8 +292,10 @@ export default function App() {
             const w = workers.find((x) => x.id === workerId);
             if (w) setWorkerModal({ mode: 'edit', worker: w });
           }}
-          onDeleteWorker={deleteWorker}
-          onRowWorkerChange={(rowIndex, newWorkerId) => setRowOverrides((prev) => ({ ...prev, [rowIndex]: newWorkerId }))}
+          onDeleteWorker={handleRowDelete}
+          onRowWorkerChange={handleRowWorkerChange}
+          onAddRow={addExtraRow}
+          canAddRow={activeWorkers.length > 0}
         />
 
         <footer className="sheet-foot">

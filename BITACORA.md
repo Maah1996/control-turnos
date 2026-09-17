@@ -407,6 +407,31 @@ patrón ya usado en "Secciones", y se construyó:
 **Archivos nuevos (ajuste 8):** `src/components/WorkerManager.tsx`.
 **Archivos modificados (ajuste 8):** `src/App.tsx`, `src/App.css`.
 
+**Ajuste 9 — mismo día: botón "+ Agregar fila".** El usuario ya estaba probando la app con
+datos reales (agregó a su primer trabajador real, "Luis Moraga Márquez") y pidió poder
+agregar una fila extra al calendario para, con el desplegable de esa fila, elegir a cuál
+trabajador ya existente mostrar ahí (por ejemplo para verlo dos veces, o dejar un espacio
+reservado en el mural). Se aclaró primero que esto es distinto de agregar un trabajador nuevo
+a la base (eso ya lo hace "+ Trabajador"). Implementado:
+- `App.tsx`: nuevo estado `extraRows: string[]` (ids de trabajador, una fila extra por
+  elemento, agregadas después de las filas normales del filtro Alcance). `displayedWorkers`
+  ahora concatena las filas del filtro + las filas extra. `addExtraRow()` agrega una fila
+  nueva con el primer trabajador activo por defecto (deshabilitado si no hay ninguno).
+  `handleRowWorkerChange`/`handleRowDelete` distinguen si el índice de fila es "normal" (usa
+  `rowOverrides`/`deleteWorker` como antes) o "extra" (edita/quita del arreglo `extraRows` sin
+  tocar la base de datos). Se reinician junto con `rowOverrides` al cambiar Alcance.
+- `CalendarGrid.tsx`: nuevas props `onAddRow`/`canAddRow`; `<tfoot>` con el botón
+  "+ Agregar fila" (borde punteado, deshabilitado con tooltip si todavía no hay ningún
+  trabajador creado); oculto al imprimir.
+- Verificado en vivo: agregar fila → aparece una 6ª fila con el primer trabajador → cambiar su
+  desplegable a "Pedro Antonio Cárcamo" → muestra sus turnos y horas reales, sin duplicar
+  turnos ni afectar su fila original → eliminar esa fila extra con el ícono de papelera → se
+  quita solo el espacio, Pedro sigue intacto en su fila de siempre. `tsc -b` sin errores, sin
+  errores de consola.
+
+**Archivos modificados (ajuste 9):** `src/App.tsx`, `src/components/CalendarGrid.tsx`,
+`src/App.css`.
+
 ---
 ---
 

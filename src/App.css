@@ -265,6 +265,16 @@ body {
 
 .grid td.total { text-align: center; font-weight: 700; color: var(--color-foreground); }
 
+.add-row-cell { padding: var(--space-3); text-align: center; }
+.add-row-btn {
+  border: 1px dashed var(--color-border-strong); background: transparent; color: var(--color-muted-foreground);
+  border-radius: var(--radius-sm); padding: 8px 18px; cursor: pointer; font-family: inherit; font-size: 13px;
+  transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+.add-row-btn:hover:not(:disabled) { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-muted); }
+.add-row-btn:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
+.add-row-btn:disabled { cursor: not-allowed; opacity: .5; }
+
 /* ---------- Modal ---------- */
 .modal-scrim {
   position: fixed; inset: 0; background: rgba(15, 23, 42, .45); backdrop-filter: blur(2px);
@@ -403,4 +413,5 @@ body {
   .chip { border-left-width: 3px; }
   .worker-delete { display: none; }
   .worker-swap-label { display: none; }
+  tfoot { display: none; }
 }

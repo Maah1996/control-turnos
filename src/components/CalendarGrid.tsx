@@ -13,13 +13,15 @@ interface Props {
   onCellClick?: (workerId: string, iso: string) => void;
   onShiftClick?: (shift: ScheduledShift) => void;
   onWorkerClick?: (workerId: string) => void;
-  onDeleteWorker?: (workerId: string) => void;
+  onDeleteWorker?: (workerId: string, rowIndex: number) => void;
   onRowWorkerChange?: (rowIndex: number, newWorkerId: string) => void;
+  onAddRow?: () => void;
+  canAddRow?: boolean;
 }
 
 export function CalendarGrid({
   days, workers, allWorkers, shifts, shiftTypes, today,
-  onCellClick, onShiftClick, onWorkerClick, onDeleteWorker, onRowWorkerChange,
+  onCellClick, onShiftClick, onWorkerClick, onDeleteWorker, onRowWorkerChange, onAddRow, canAddRow,
 }: Props) {
   const typeById = new Map(shiftTypes.map((t) => [t.id, t]));
 
@@ -95,7 +97,7 @@ export function CalendarGrid({
                 <button
                   type="button"
                   className="worker-delete"
-                  onClick={(e) => { e.stopPropagation(); onDeleteWorker?.(w.id); }}
+                  onClick={(e) => { e.stopPropagation(); onDeleteWorker?.(w.id, rowIndex); }}
                   title="Eliminar trabajador"
                   aria-label={`Eliminar a ${w.fullName}`}
                 >
@@ -144,6 +146,23 @@ export function CalendarGrid({
             </tr>
           ))}
         </tbody>
+        {onAddRow && (
+          <tfoot>
+            <tr>
+              <td className="add-row-cell" colSpan={days.length + 2}>
+                <button
+                  type="button"
+                  className="add-row-btn"
+                  onClick={onAddRow}
+                  disabled={!canAddRow}
+                  title={canAddRow ? undefined : 'Crea un trabajador primero'}
+                >
+                  + Agregar fila
+                </button>
+              </td>
+            </tr>
+          </tfoot>
+        )}
       </table>
     </div>
   );
