@@ -257,8 +257,7 @@ export default function App() {
           </div>
 
           <button className="ghost" onClick={() => setAreaManagerOpen(true)}>Secciones</button>
-          <button className="ghost" onClick={() => setWorkerManagerOpen(true)}>Trabajadores</button>
-          <button className="primary" onClick={() => setWorkerModal({ mode: 'new' })}>+ Trabajador</button>
+          <button className="primary" onClick={() => setWorkerManagerOpen(true)}>Trabajadores</button>
           <button className="ghost" onClick={() => window.print()}>Imprimir</button>
         </div>
       </header>

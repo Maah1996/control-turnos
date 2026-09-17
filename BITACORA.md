@@ -432,6 +432,16 @@ a la base (eso ya lo hace "+ Trabajador"). Implementado:
 **Archivos modificados (ajuste 9):** `src/App.tsx`, `src/components/CalendarGrid.tsx`,
 `src/App.css`.
 
+**Ajuste 10 — mismo día: quitar el botón "+ Trabajador" repetido.** El usuario notó que
+"Trabajadores" y "+ Trabajador" en la barra superior eran redundantes. Se aplicó el mismo
+patrón que ya tenía "Secciones" (un solo botón que abre la lista, con "+ Nuevo/+ Agregar"
+adentro): se quitó el botón suelto "+ Trabajador" y "Trabajadores" pasó a ser el botón
+destacado (`.primary`, antes `.ghost`) ya que ahora es la única puerta de entrada. Agregar
+un trabajador nuevo sigue siendo posible, solo que desde adentro de "Trabajadores" (como ya
+funcionaba "+ Nuevo trabajador" ahí). Verificado en vivo, sin errores de consola.
+
+**Archivos modificados (ajuste 10):** `src/App.tsx`.
+
 ---
 ---
 
