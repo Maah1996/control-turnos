@@ -229,6 +229,24 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
     setShiftModal(null);
   };
 
+  // Llenado por rango (Vacaciones/Licencia/etc.): reemplaza lo que hubiera ese día por
+  // cada fecha calculada (día hábil por día hábil) con la ausencia elegida.
+  const saveShiftRange = (data: { shiftTypeId: string; notes?: string }, dates: string[]) => {
+    if (!shiftModal) return;
+    const { workerId } = shiftModal;
+    for (const date of dates) {
+      shifts
+        .filter((s) => s.workerId === workerId && s.date === date && s.status !== 'anulado')
+        .forEach((s) => shiftsSync.remove(s.id));
+      shiftsSync.save({
+        id: newShiftId(), workerId, date, status: 'publicado',
+        shiftTypeId: data.shiftTypeId, start: '00:00', end: '00:00', breakMinutes: 0,
+        ...(data.notes ? { notes: data.notes } : {}),
+      });
+    }
+    setShiftModal(null);
+  };
+
   const addMotivo = (name: string) => {
     const clean = name.trim();
     if (!clean) return;
@@ -422,11 +440,13 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
           <ShiftForm
             workerName={workers.find((w) => w.id === shiftModal.workerId)?.fullName ?? ''}
             dateLabel={fmtLong(fromISO(shiftModal.iso))}
+            dateIso={shiftModal.iso}
             shiftTypes={SHIFT_TYPES}
             motivos={motivos}
             onAddMotivo={addMotivo}
             initial={shiftModal.shift}
             onSave={saveShift}
+            onSaveRange={saveShiftRange}
             onDelete={shiftModal.shift ? deleteShift : undefined}
             onClose={() => setShiftModal(null)}
           />

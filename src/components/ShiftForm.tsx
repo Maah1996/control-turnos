@@ -1,16 +1,20 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { ScheduledShift, ShiftType } from '../types';
-import { addMinutesToTime, minutesBetween } from '../lib/dates';
+import {
+  addMinutesToTime, businessDaysRange, fmtLong, fromISO, minutesBetween, toISO,
+} from '../lib/dates';
 
 interface Props {
   workerName: string;
   dateLabel: string;
+  dateIso: string;
   shiftTypes: ShiftType[];
   motivos: string[];
   onAddMotivo: (name: string) => void;
   initial?: ScheduledShift;
   onSave: (shift: Pick<ScheduledShift, 'shiftTypeId' | 'start' | 'end' | 'breakMinutes' | 'notes'>) => void;
+  onSaveRange?: (data: { shiftTypeId: string; notes?: string }, dates: string[]) => void;
   onDelete?: () => void;
   onClose: () => void;
 }
@@ -20,7 +24,7 @@ interface Props {
 export const MOTIVO_PREFIX = 'motivo:';
 
 export function ShiftForm({
-  workerName, dateLabel, shiftTypes, motivos, onAddMotivo, initial, onSave, onDelete, onClose,
+  workerName, dateLabel, dateIso, shiftTypes, motivos, onAddMotivo, initial, onSave, onSaveRange, onDelete, onClose,
 }: Props) {
   const [shiftTypeId, setShiftTypeId] = useState(initial?.shiftTypeId ?? shiftTypes[0]?.id ?? '');
   const [start, setStart] = useState(initial?.start ?? shiftTypes[0]?.defaultStart ?? '08:00');
@@ -29,8 +33,19 @@ export function ShiftForm({
   const [notes, setNotes] = useState(initial?.notes ?? '');
   const [addingMotivo, setAddingMotivo] = useState(false);
   const [newMotivo, setNewMotivo] = useState('');
+  const [rangeStart, setRangeStart] = useState(dateIso);
+  const [rangeDays, setRangeDays] = useState(1);
 
   const isMotivo = shiftTypeId.startsWith(MOTIVO_PREFIX);
+  // El llenado por rango (fecha de inicio + cantidad de días hábiles) solo aplica al crear
+  // una ausencia nueva — editar un día ya guardado sigue siendo de a uno, como antes.
+  const isNewMotivoRange = isMotivo && !initial && Boolean(onSaveRange);
+
+  const rangeDates = useMemo(
+    () => (isNewMotivoRange ? businessDaysRange(fromISO(rangeStart), Math.max(1, rangeDays)) : []),
+    [isNewMotivoRange, rangeStart, rangeDays],
+  );
+  const rangeEnd = rangeDates[rangeDates.length - 1];
 
   const applyMotivo = (name: string) => {
     setShiftTypeId(MOTIVO_PREFIX + name);
@@ -78,6 +93,13 @@ export function ShiftForm({
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
+    if (isNewMotivoRange && onSaveRange) {
+      onSaveRange(
+        { shiftTypeId, ...(notes.trim() ? { notes: notes.trim() } : {}) },
+        rangeDates.map(toISO),
+      );
+      return;
+    }
     onSave({
       shiftTypeId, start, end, breakMinutes: Number(breakMinutes) || 0,
       // Firestore rechaza `undefined` en un campo: se omite en vez de enviarse como undefined
@@ -140,6 +162,31 @@ export function ShiftForm({
             />
           </label>
         </div>
+      )}
+
+      {isNewMotivoRange && (
+        <>
+          <div className="form-row">
+            <label className="form-field">
+              <span>Fecha de inicio</span>
+              <input type="date" value={rangeStart} onChange={(e) => setRangeStart(e.target.value)} />
+            </label>
+            <label className="form-field">
+              <span>Cantidad de días hábiles</span>
+              <input
+                type="number" min={1} max={90}
+                value={rangeDays} onChange={(e) => setRangeDays(Number(e.target.value))}
+              />
+            </label>
+          </div>
+          {rangeEnd && (
+            <p className="form-context">
+              Se completará el calendario de <strong>{fmtLong(fromISO(rangeStart))}</strong> a{' '}
+              <strong>{fmtLong(rangeEnd)}</strong> ({rangeDates.length}{' '}
+              {rangeDates.length === 1 ? 'día hábil' : 'días hábiles'}; el sábado y domingo no cuentan).
+            </p>
+          )}
+        </>
       )}
 
       <label className="form-field">

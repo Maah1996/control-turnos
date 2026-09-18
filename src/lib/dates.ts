@@ -58,6 +58,21 @@ export function isWeekend(d: Date): boolean {
   return dow === 0 || dow === 6;
 }
 
+/**
+ * Los `count` días hábiles a partir de `start` (lunes a viernes — el sábado es siempre
+ * inhábil para efectos de feriado legal, Art. 69 Código del Trabajo). Si `start` cae en
+ * fin de semana, se salta al primer día hábil sin contarlo.
+ */
+export function businessDaysRange(start: Date, count: number): Date[] {
+  const result: Date[] = [];
+  let cur = new Date(start);
+  while (result.length < count) {
+    if (!isWeekend(cur)) result.push(new Date(cur));
+    cur = addDays(cur, 1);
+  }
+  return result;
+}
+
 export function isSameDay(a: Date, b: Date): boolean {
   return toISO(a) === toISO(b);
 }
