@@ -3,7 +3,7 @@ import type { ScheduledShift, Worker } from '../types';
 import {
   dayName, eachDay, endOfMonth, fmtHours, fmtLong, fmtMonthYear, fromISO, minutesBetween, startOfMonth, toISO,
 } from '../lib/dates';
-import { DAILY_REFERENCE_MINUTES } from '../lib/laborLaw';
+import { splitWeeklyLegalAndExtra, workerWeeklyLimitMinutes } from '../lib/laborLaw';
 
 interface Props {
   workers: Worker[];
@@ -25,31 +25,24 @@ export function MonthlyReport({ workers, shifts }: Props) {
   const days = useMemo(() => eachDay(startOfMonth(anchor), endOfMonth(anchor)), [anchor]);
   const daySet = useMemo(() => new Set(days.map(toISO)), [days]);
 
-  // Horas extra del mes = suma de lo que cada día individual pasa de la jornada diaria de
-  // 8h (horas netas, colación ya descontada — Art. 34 Código del Trabajo), día por día.
-  // "Horas legales" es el resto (lo que sí entra dentro de la jornada ordinaria).
+  // Mismo criterio que la columna "Horas" del calendario: horas legales/extra repartidas
+  // según el tope semanal propio de cada trabajador (Worker.weeklyHours), agrupado por
+  // semana calendario dentro del mes — ver lib/laborLaw.ts.
   const summaries = useMemo<WorkerMonthSummary[]>(() => {
-    const byWorker = new Map<string, WorkerMonthSummary>();
+    const result: WorkerMonthSummary[] = [];
     for (const w of workers) {
-      byWorker.set(w.id, {
-        worker: w, legalMinutes: 0, extraMinutes: 0, totalMinutes: 0, extraDays: [],
+      const shiftsInMonth = shifts.filter((s) => s.workerId === w.id && s.status !== 'anulado' && daySet.has(s.date));
+      if (shiftsInMonth.length === 0) continue;
+      const limitMinutes = workerWeeklyLimitMinutes(w, anchor);
+      const { legalMinutes, extraMinutes, extraByDay } = splitWeeklyLegalAndExtra(shiftsInMonth, limitMinutes);
+      const totalMinutes = shiftsInMonth.reduce((acc, s) => acc + minutesBetween(s.start, s.end) - s.breakMinutes, 0);
+      result.push({
+        worker: w, legalMinutes, extraMinutes, totalMinutes,
+        extraDays: extraByDay,
       });
     }
-    for (const s of shifts) {
-      if (s.status === 'anulado' || !daySet.has(s.date)) continue;
-      const summary = byWorker.get(s.workerId);
-      if (!summary) continue;
-      const net = minutesBetween(s.start, s.end) - s.breakMinutes;
-      const extra = Math.max(0, net - DAILY_REFERENCE_MINUTES);
-      summary.legalMinutes += net - extra;
-      summary.extraMinutes += extra;
-      summary.totalMinutes += net;
-      if (extra > 0) summary.extraDays.push({ iso: s.date, extraMinutes: extra });
-    }
-    return [...byWorker.values()]
-      .filter((r) => r.totalMinutes > 0)
-      .sort((a, b) => a.worker.fullName.localeCompare(b.worker.fullName, 'es'));
-  }, [workers, shifts, daySet]);
+    return result.sort((a, b) => a.worker.fullName.localeCompare(b.worker.fullName, 'es'));
+  }, [workers, shifts, daySet, anchor]);
 
   const selected = summaries.find((r) => r.worker.id === selectedWorkerId) ?? null;
 

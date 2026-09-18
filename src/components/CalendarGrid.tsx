@@ -1,8 +1,8 @@
 import type { ScheduledShift, ShiftType, Worker } from '../types';
 import {
-  dayShort, fmtHours, isSameDay, isWeekend, minutesBetween, startOfWeek, toISO,
+  dayShort, fmtHours, isSameDay, isWeekend, minutesBetween, toISO,
 } from '../lib/dates';
-import { DAILY_REFERENCE_MINUTES, weeklyLegalLimitHours } from '../lib/laborLaw';
+import { DAILY_REFERENCE_MINUTES, splitWeeklyLegalAndExtra, workerWeeklyLimitMinutes } from '../lib/laborLaw';
 import { MOTIVO_PREFIX } from './ShiftForm';
 
 interface Props {
@@ -38,32 +38,15 @@ export function CalendarGrid({
   const shiftsFor = (workerId: string, iso: string) =>
     shifts.filter((s) => s.workerId === workerId && s.date === iso && s.status !== 'anulado');
 
-  const workerWeekMinutes = (workerId: string) =>
-    shifts
-      .filter((s) => s.workerId === workerId && s.status !== 'anulado'
-        && days.some((d) => toISO(d) === s.date))
-      .reduce((acc, s) => acc + minutesBetween(s.start, s.end) - s.breakMinutes, 0);
-
-  // Horas extra: todo lo que pase el tope legal semanal (42h desde abr-2026, ver
-  // lib/laborLaw.ts) sobre el total de la semana completa. Se agrupa por semana calendario
-  // (lunes de esa semana) para que también funcione en las vistas Quincena/Mes, que
-  // muestran más de una semana a la vez.
-  const weeklyLimitMinutes = weeklyLegalLimitHours(today) * 60;
-
-  const workerExtraMinutes = (workerId: string) => {
-    const minutesByWeek = new Map<string, number>();
-    for (const d of days) {
-      const iso = toISO(d);
-      const weekKey = toISO(startOfWeek(d));
-      const dayMinutes = shiftsFor(workerId, iso)
-        .reduce((acc, s) => acc + minutesBetween(s.start, s.end) - s.breakMinutes, 0);
-      minutesByWeek.set(weekKey, (minutesByWeek.get(weekKey) ?? 0) + dayMinutes);
-    }
-    let extra = 0;
-    for (const mins of minutesByWeek.values()) {
-      if (mins > weeklyLimitMinutes) extra += mins - weeklyLimitMinutes;
-    }
-    return extra;
+  // "Horas" legales/extra de cada trabajador: se reparten según SU tope semanal propio
+  // (Worker.weeklyHours — 42h para jornada completa, menos si es part-time), no un número
+  // fijo igual para todos. Se agrupa por semana calendario para que también funcione en
+  // las vistas Quincena/Mes, que muestran más de una semana a la vez.
+  const workerLegalAndExtra = (worker: Worker) => {
+    const shiftsInView = shifts.filter((s) => s.workerId === worker.id && s.status !== 'anulado'
+      && days.some((d) => toISO(d) === s.date));
+    const limitMinutes = workerWeeklyLimitMinutes(worker, today);
+    return splitWeeklyLegalAndExtra(shiftsInView, limitMinutes);
   };
 
   return (
@@ -97,7 +80,9 @@ export function CalendarGrid({
               </td>
             </tr>
           )}
-          {workers.map((w, rowIndex) => (
+          {workers.map((w, rowIndex) => {
+            const { legalMinutes, extraMinutes } = workerLegalAndExtra(w);
+            return (
             <tr key={`row-${rowIndex}`}>
               <th className="worker" scope="row">
                 <span className="swatch" style={{ background: w.color }} />
@@ -194,15 +179,18 @@ export function CalendarGrid({
                 );
               })}
               <td className="total">
-                <span className="total-hours">{fmtHours(workerWeekMinutes(w.id))}</span>
-                {workerExtraMinutes(w.id) > 0 && (
-                  <span className="total-overtime" title="Horas extra sobre el tope legal semanal">
-                    +{fmtHours(workerExtraMinutes(w.id))}
+                <span className="total-hours" title="Horas dentro de la jornada semanal contratada">
+                  {fmtHours(legalMinutes)}
+                </span>
+                {extraMinutes > 0 && (
+                  <span className="total-overtime" title="Horas extra sobre la jornada semanal contratada">
+                    +{fmtHours(extraMinutes)}
                   </span>
                 )}
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
         {onAddRow && (
           <tfoot>
