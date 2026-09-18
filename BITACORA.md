@@ -15,7 +15,7 @@
 | **Stack** | React + Vite + TypeScript en el frontend; **Firebase** (Firestore + Auth + Hosting) en el backend |
 | **Local** | `OneDrive/0 PROGRA/23 TURNOS` |
 | **Repo** | `Maah1996/control-turnos` (privado) — https://github.com/Maah1996/control-turnos |
-| **Deploy** | Firebase Hosting (pendiente crear proyecto Firebase) |
+| **Deploy** | Firebase Hosting — proyecto `control-turnos-6b394` creado y con `firebase.json`/`.firebaserc` listos; falta correr `firebase deploy` (ver Sesión 3) |
 | **Zona horaria** | `America/Santiago` (considerar cambio de hora / DST en cálculos) |
 
 ### Por qué este stack (decisión 2026-08-30)
@@ -34,49 +34,43 @@ El prompt maestro pedía **React + Vite + Supabase**. Se optó por **React + Vit
 
 ## ▶ PARA RETOMAR (leer esto al iniciar la próxima sesión)
 
-**Estado actual (cierre de sesión 2, 16-sep-2026):** proyecto scaffolded (Vite + React + TS).
-La pantalla **Calendario de Turnos** ya es utilizable de punta a punta con datos reales del
-usuario (no solo mock): vistas semana/quincena/mes, rediseño visual con profundidad (skill
-`ui-ux-pro-max`), y CRUD completo desde la propia pantalla —
-- **Trabajadores:** crear/editar (botón "Trabajadores"), quitar de una fila del calendario
-  (los marca "Inactivo", NO los borra — siguen en "Trabajadores" y son reactivables),
-  eliminar de verdad solo desde dentro de "Trabajadores" o "Editar trabajador" (con aviso de
-  que es permanente).
-- **Secciones:** crear/renombrar/eliminar (botón "Secciones").
-- **Turnos:** asignar/editar/quitar por celda, con un desplegable de "Motivo" (Vacaciones,
-  Permiso, Licencia, Día libre + agregar otros) que llena el campo Notas.
-- **Filas del calendario:** cada fila tiene un desplegable para mostrar a cualquier
-  trabajador de la base (activo o inactivo) en esa posición, y "+ Agregar fila" para sumar
-  filas extra — todo sin duplicar ni perder turnos de nadie.
-Todo persistido en `localStorage` del navegador (por eso cada usuario/dispositivo ve datos
-distintos). Sin backend todavía (sin Firebase, sin multiusuario, sin auditoría real).
+**Estado actual (cierre de sesión 3, 18-sep-2026):** la app ahora tiene **dos entradas**
+(`RoleGate`): administrador y trabajador. El administrador ve el mismo **Calendario de
+Turnos** de siempre (semana/quincena/mes, CRUD de trabajadores/secciones/turnos, motivo de
+ausencia fusionado en "Tipo de turno") más una bandeja de **Solicitudes**. Cada trabajador
+entra a su propio portal con un **código de 4-6 dígitos** (sin correo ni contraseña), ve su
+horario real y puede pedir cambios/día libre/reemplazo, que el administrador aprueba o
+rechaza. **Toda la persistencia pasó de `localStorage` a Firebase** (Firestore + Auth anónima,
+proyecto `control-turnos-6b394`, plan Spark gratuito, región `southamerica-west1`) — admin y
+trabajadores ven los mismos datos en tiempo real. Verificado en vivo de punta a punta contra
+Firebase real (ver Sesión 3). Paleta visual vigente: marino institucional + teal + oro
+("misma familia que Control Horarios", subida por el usuario directo a GitHub).
 
 **Siguiente sesión — hacer, en orden:**
-1. Confirmación explícita del usuario de que el flujo completo (crear trabajador → asignar
-   turno → quitar/reactivar → motivo) le sirve para uso real, antes de seguir sumando cosas.
-2. Flujo de **borrador + Guardar con resumen** (hoy cada guardado es directo e inmediato, sin
-   confirmación de lote — ver DECISIONES 2026-09-16).
-3. ABM de trabajadores: falta edición **masiva** (seleccionar varias filas y cambiar en
-   bloque) e importación desde Excel/CSV — hoy solo hay alta/edición/baja individual.
-4. Selector de rango personalizado (hoy: semana / quincena / mes fijos).
-5. Arreglar superposición de chips en vista **Mes** (columnas muy angostas,
-   `table-layout: fixed`) — detectado en sesión 2, nunca corregido, sigue pendiente.
-6. Recién después: crear proyecto Firebase + migrar `localStorage` a Firestore + auditoría real.
+1. **Desplegar a Firebase Hosting de verdad** (`firebase login` → `npm run build` →
+   `firebase deploy --only hosting --project control-turnos-6b394`) — hoy solo se probó con
+   el dev server local; falta una URL real para que el usuario lo use fuera de este equipo.
+2. Preguntar al usuario si quiere un PIN/login para "Soy administrador" (hoy entra cualquiera
+   sin contraseña).
+3. Revisar las reglas de seguridad de Firestore (hoy permisivas a propósito: cualquier sesión
+   anónima puede leer/escribir todo).
+4. ABM de trabajadores: falta edición **masiva** e importación desde Excel/CSV.
+5. Selector de rango personalizado (hoy: semana / quincena / mes fijos).
+6. Arreglar superposición de chips en vista **Mes** (columnas muy angostas,
+   `table-layout: fixed`) — detectado en sesión 2, sigue pendiente.
 
 **Pendientes de fondo (no bloquean, anotados para no olvidar):**
 - Definir si el registro de asistencia será "registro oficial" (estándar RCE de la Dirección
   del Trabajo) o solo herramienta interna de gestión.
 - Confirmar con asesoría laboral los umbrales de `labor_rules` antes de darlos por válidos.
-- Reemplazar el `window.confirm`/`alert` que puedan quedar (revisar si queda alguno) por
-  diálogos propios — el de eliminar trabajador ya se corrigió (ver ajuste 6), motivado porque
-  esos diálogos nativos no se muestran dentro del iframe del link de Artifact.
-- Mensaje de éxito visible tras Guardar (hoy la única confirmación es que el modal se cierra
-  y el cambio se ve reflejado en la grilla).
+- Mensaje de éxito visible tras Guardar en el calendario del admin (hoy la única confirmación
+  es que el modal se cierra y el cambio se ve reflejado en la grilla).
 - El link de vista previa (Artifact) usa un build estático aparte (`dist-preview/`, en
-  `.gitignore`) — regenerar con `npx vite build --base=./ --outDir dist-preview` y republicar
-  cada vez que se quiera mostrar el estado más reciente ahí; el repo de GitHub es la fuente
-  real de verdad del código.
-- Script `bitacora_md_a_pdf.py` para llevar la bitácora también en PDF (no existe todavía).
+  `.gitignore`) y **no puede hablar con Firebase** (confirmado en Sesión 3: el sandbox de
+  Artifact no completa conexiones de red hacia Firestore/Auth) — para probar de verdad
+  siempre usar el dev server local o, una vez desplegado, la URL de Firebase Hosting.
+- `bitacora_md_a_pdf.py` ya existe (creado en Sesión 3) — correr `python bitacora_md_a_pdf.py`
+  al cerrar cada sesión para regenerar `BITACORA.pdf`.
 
 ---
 
@@ -573,6 +567,102 @@ vez de un horario. Se fusionaron ambos controles en uno solo:
 
 **Archivos modificados (ajuste 15):** `src/components/ShiftForm.tsx`,
 `src/components/CalendarGrid.tsx`, `src/App.tsx`, `src/App.css`.
+
+---
+
+### Sesión 3 — 2026-09-18
+
+**Punto de partida:** el usuario entregó un PDF (`control-turnos-estado.pdf`) generado por
+otra sesión de Claude que había trabajado el proyecto **fuera de este entorno** (en una vista
+previa/Artifact de claude.ai, sin acceso a GitHub). Ese documento traía todo el código fuente
+de un módulo nuevo — portal de trabajadores + Firebase — con la advertencia de que nunca se
+había podido verificar en vivo, porque el entorno de vista previa de Artifact no logra
+completar conexiones de red hacia Firebase (Firestore/Auth quedan inalcanzables desde ese
+sandbox). Tarea de esta sesión: leer el PDF, comparar contra GitHub, actualizar si hacía
+falta, verificar de verdad en un navegador, y dejar todo documentado.
+
+**Hecho:**
+1. **Comparación PDF vs. GitHub.** Confirmado: el repositorio (y el local, sincronizado con
+   `origin/main`) seguía en la versión de la Sesión 2 — sin login de trabajadores, con
+   `localStorage` en vez de Firebase. El PDF traía trabajo real y nuevo, nunca subido.
+2. **Aplicado el módulo nuevo** — portal de trabajadores + Firebase — a partir del código del
+   PDF (ver cuadro comparativo más abajo para el detalle completo).
+3. **Conflicto de diseño detectado y resuelto sin pérdida de trabajo.** El código del PDF traía
+   su propia paleta ("Ink & Ember", violeta + coral) generada por la otra sesión sin
+   conocimiento del rediseño ya confirmado en vivo (Sesión 2, azul + verde). Se aplicó solo la
+   parte **funcional** del CSS (pantallas nuevas), conservando la paleta vigente en ese momento.
+4. **Segundo conflicto, esta vez con GitHub real:** al hacer `git push`, GitHub rechazó el
+   envío porque el usuario había subido **anoche, directo por el editor web de GitHub**, un
+   nuevo rediseño de `App.css` (commit `2ccc312` "Update App.css") — paleta marino
+   institucional + teal + oro, "misma familia que Control Horarios", tipografía Manrope/IBM
+   Plex Mono. Se hizo `git fetch` + `git merge`, con un solo conflicto real (las variables de
+   color en `:root`), resuelto a mano: se conservó la paleta nueva del usuario tal cual, y el
+   alias `--color-cta` (insignias de "pendiente") se mapeó al dorado (`--color-gold`) ya
+   definido por esa paleta, en vez de inventar un color nuevo.
+5. **2 bugs reales encontrados y corregidos** (nunca detectados en el PDF original, precisamente
+   porque ese entorno no llegaba a hablar con Firebase de verdad) — ver cuadro comparativo.
+6. **Verificado en vivo, extremo a extremo, en el navegador real** (dev server local, ya no un
+   Artifact aislado): admin genera un código de acceso a un trabajador → el trabajador entra a
+   su portal con ese código sin correo ni contraseña → ve su horario real (sincronizado desde
+   Firestore) → pide un cambio → el administrador lo ve aparecer al instante en "Solicitudes"
+   → lo aprueba → el trabajador ve la respuesta. Todo confirmado con capturas y sin errores de
+   consola tras los 2 fixes. `tsc -b` y `vite build` limpios.
+7. **Subido a GitHub:** commit `27f09c5` (el módulo nuevo) + merge `4d8c7a2` (fusión con el
+   rediseño del usuario) — rama `main` de `Maah1996/control-turnos` al día.
+
+**Cuadro comparativo — qué cambió respecto al código anterior (Sesión 2):**
+
+| Archivo | Qué se agregó o cambió | Por qué |
+|---|---|---|
+| `src/App.tsx` | Pasó de ser la pantalla del calendario a ser un **router de roles**: decide si mostrar `RoleGate`, `AdminApp` o `WorkerPortal` según `sessionStorage.turnos_rol`. | Ahora la app tiene dos entradas (admin/trabajador) en vez de una sola pantalla. |
+| `src/AdminApp.tsx` *(nuevo)* | Es el antiguo `App.tsx` (el calendario completo), con dos cambios: (1) toda la persistencia pasó de `localStorage` a Firestore en tiempo real; (2) se agregó el botón "Solicitudes" con insignia de pendientes y el modal `RequestInbox`. | Se conserva toda la lógica de calendario ya validada en Sesión 2, ahora compartida entre dispositivos vía Firebase. |
+| `src/lib/firebase.ts` *(nuevo)* | Conexión al proyecto Firebase `control-turnos-6b394` (Firestore + Auth anónima) y `ensureSignedIn()`. | Backend real — reemplaza el `localStorage` por-dispositivo. |
+| `src/lib/firestoreSync.ts` *(nuevo)* | Hooks `useFirestoreCollection` / `useFirestoreDoc`: sincronizan colecciones/documentos con `onSnapshot` en tiempo real, con siembra automática de datos de ejemplo la primera vez. | Reemplazan `loadJSON`/`saveJSON` de `src/lib/storage.ts` en `AdminApp`. |
+| `src/components/RoleGate.tsx` *(nuevo)* | Pantalla de entrada: "Soy administrador" / "Soy trabajador". | Punto de entrada a los dos portales nuevos. |
+| `src/components/WorkerPortal.tsx` *(nuevo)* | Portal del trabajador: login por código de 4-6 dígitos, "Mi horario" (semana con turnos reales) y "Mis solicitudes", con formulario para pedir cambio/día libre/reemplazo. | Entrega principal de la sesión: cada trabajador ve su horario sin necesitar cuenta de correo. |
+| `src/components/RequestInbox.tsx` *(nuevo)* | Bandeja de solicitudes (para el admin, y reutilizada dentro del propio portal del trabajador): filtros por estado, aprobar/rechazar con respuesta opcional. | Cierra el ciclo: el trabajador pide, el administrador resuelve. |
+| `src/components/WorkerForm.tsx` | Se agregó el campo **"Código de acceso al portal"** + botón "Generar código". | Es la llave de acceso del trabajador a `WorkerPortal`. |
+| `src/types.ts` | Se agregó `code?` a `Worker`, y los tipos `SolicitudTipo`/`SolicitudEstado`/`SolicitudCambio`. | Modelo de datos de la solicitud de cambio. |
+| `src/App.css` | Se agregaron 3 secciones nuevas al final (`.rolegate-*`, `.portal-*`, `.inbox-*`) para las pantallas nuevas — **sin tocar la paleta**, que en esta sesión pasó a ser la marino/teal/oro subida por el usuario directo a GitHub (commit `2ccc312`, fusionada sin conflicto de fondo). | Las pantallas nuevas debían verse consistentes con cualquier paleta vigente, no con la del PDF (violeta/coral, de una sesión distinta y no confirmada). |
+| `package.json` | Se agregó la dependencia `firebase` (`^11.10.0`). | Requerida por `firebase.ts`/`firestoreSync.ts`. |
+| `firebase.json`, `.firebaserc` *(nuevos)* | Configuración de Firebase Hosting apuntando a `control-turnos-6b394`, carpeta `dist`. | Dejar listo el despliegue a `https://control-turnos-6b394.web.app` (con `firebase deploy --only hosting`), pendiente de hacer. |
+| `src/components/CalendarGrid.tsx` | **Sin cambios** — el código del PDF traía un prop `onQuickMotivo` que ya no existe: el "motivo" se fusionó dentro de "Tipo de turno" en un ajuste posterior de la Sesión 2 (commit `c937794`, posterior al PDF). Se quitó esa llamada al portar el código para no romper la compilación. | El PDF reflejaba un punto anterior del código; se conservó la versión más nueva y correcta. |
+
+**2 bugs reales corregidos (ausentes del PDF, nunca antes probados contra Firebase real):**
+
+| Archivo | Bug | Corrección |
+|---|---|---|
+| `WorkerPortal.tsx` (`enviarSolicitud`) | Firestore rechaza un campo con valor `undefined` — `reemplazoWorkerId`/`reemplazoWorkerName` se enviaban como `undefined` cuando el tipo de solicitud no era "reemplazo", y el guardado fallaba en silencio (excepción no capturada). | Esos dos campos ahora solo se incluyen en el objeto cuando hay un reemplazo elegido. |
+| `AdminApp.tsx` (`resolverSolicitud`) | Mismo problema: `respuestaAdmin` viajaba como `undefined` cuando el administrador aprobaba/rechazaba sin escribir una respuesta. | Se incluye solo si el admin escribió algo. |
+| `WorkerForm.tsx` (`submit`) | Mismo problema: `code.trim() or undefined` guardaba `undefined` para trabajadores sin código asignado. | Se incluye solo si se generó/escribió un código. |
+
+**Pendiente para la próxima sesión (heredado del PDF, sin resolver aún):**
+- Desplegar a Firebase Hosting de verdad (`firebase login` → `npm run build` →
+  `firebase deploy --only hosting --project control-turnos-6b394`) para tener una URL real
+  además del dev server local.
+- Diseño de un login/PIN para "Soy administrador" (hoy entra cualquiera sin contraseña) —
+  no urgente, preguntarle al usuario si lo quiere.
+- Reglas de seguridad de Firestore actuales son permisivas a propósito (`allow read, write:
+  if request.auth != null`, cualquier sesión anónima puede leer/escribir todo) — revisar más
+  adelante si se quiere blindar mejor.
+- Seguir con los pendientes de la Sesión 2 que seguían abiertos: edición masiva de
+  trabajadores, importación Excel/CSV, selector de rango personalizado, superposición de
+  chips en vista Mes.
+
+**Archivos nuevos:** `src/lib/firebase.ts`, `src/lib/firestoreSync.ts`, `src/AdminApp.tsx`,
+`src/components/RoleGate.tsx`, `src/components/WorkerPortal.tsx`,
+`src/components/RequestInbox.tsx`, `firebase.json`, `.firebaserc`,
+`bitacora_md_a_pdf.py`.
+
+**Archivos modificados:** `src/App.tsx`, `src/types.ts`, `src/App.css`,
+`src/components/WorkerForm.tsx`, `package.json`, `package-lock.json`.
+
+**Commits:** `27f09c5` (módulo portal de trabajadores + Firebase) y `4d8c7a2` (merge con el
+rediseño de paleta subido por el usuario a GitHub) — ambos en `Maah1996/control-turnos`,
+rama `main`.
+
+**Confirmado en vivo por el usuario:** (pendiente — el usuario debe revisar la app y esta
+bitácora)
 
 ---
 ---
