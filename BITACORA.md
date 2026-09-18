@@ -15,7 +15,7 @@
 | **Stack** | React + Vite + TypeScript en el frontend; **Firebase** (Firestore + Auth + Hosting) en el backend |
 | **Local** | `OneDrive/0 PROGRA/23 TURNOS` |
 | **Repo** | `Maah1996/control-turnos` (privado) — https://github.com/Maah1996/control-turnos |
-| **Deploy** | Firebase Hosting — proyecto `control-turnos-6b394` creado y con `firebase.json`/`.firebaserc` listos; falta correr `firebase deploy` (ver Sesión 3) |
+| **Deploy** | Firebase Hosting — **https://control-turnos-6b394.web.app** (desplegado en Sesión 3) |
 | **Zona horaria** | `America/Santiago` (considerar cambio de hora / DST en cálculos) |
 
 ### Por qué este stack (decisión 2026-08-30)
@@ -45,18 +45,17 @@ proyecto `control-turnos-6b394`, plan Spark gratuito, región `southamerica-west
 trabajadores ven los mismos datos en tiempo real. Verificado en vivo de punta a punta contra
 Firebase real (ver Sesión 3). Paleta visual vigente: marino institucional + teal + oro
 ("misma familia que Control Horarios", subida por el usuario directo a GitHub).
+**Desplegado a Firebase Hosting: https://control-turnos-6b394.web.app** (verificado en vivo
+tras el deploy — carga y habla con Firestore desde el dominio real, no solo en local).
 
 **Siguiente sesión — hacer, en orden:**
-1. **Desplegar a Firebase Hosting de verdad** (`firebase login` → `npm run build` →
-   `firebase deploy --only hosting --project control-turnos-6b394`) — hoy solo se probó con
-   el dev server local; falta una URL real para que el usuario lo use fuera de este equipo.
-2. Preguntar al usuario si quiere un PIN/login para "Soy administrador" (hoy entra cualquiera
+1. Preguntar al usuario si quiere un PIN/login para "Soy administrador" (hoy entra cualquiera
    sin contraseña).
-3. Revisar las reglas de seguridad de Firestore (hoy permisivas a propósito: cualquier sesión
+2. Revisar las reglas de seguridad de Firestore (hoy permisivas a propósito: cualquier sesión
    anónima puede leer/escribir todo).
-4. ABM de trabajadores: falta edición **masiva** e importación desde Excel/CSV.
-5. Selector de rango personalizado (hoy: semana / quincena / mes fijos).
-6. Arreglar superposición de chips en vista **Mes** (columnas muy angostas,
+3. ABM de trabajadores: falta edición **masiva** e importación desde Excel/CSV.
+4. Selector de rango personalizado (hoy: semana / quincena / mes fijos).
+5. Arreglar superposición de chips en vista **Mes** (columnas muy angostas,
    `table-layout: fixed`) — detectado en sesión 2, sigue pendiente.
 
 **Pendientes de fondo (no bloquean, anotados para no olvidar):**
@@ -636,10 +635,14 @@ falta, verificar de verdad en un navegador, y dejar todo documentado.
 | `AdminApp.tsx` (`resolverSolicitud`) | Mismo problema: `respuestaAdmin` viajaba como `undefined` cuando el administrador aprobaba/rechazaba sin escribir una respuesta. | Se incluye solo si el admin escribió algo. |
 | `WorkerForm.tsx` (`submit`) | Mismo problema: `code.trim() or undefined` guardaba `undefined` para trabajadores sin código asignado. | Se incluye solo si se generó/escribió un código. |
 
+**Desplegado a Firebase Hosting** (mismo día, después de la primera entrega de esta sesión):
+`npm run build` + `firebase deploy --only hosting --project control-turnos-6b394`, con la
+cuenta `maahantartico@gmail.com` (ya autenticada en `firebase-tools` desde otro proyecto,
+con acceso confirmado a `control-turnos-6b394`). URL real:
+**https://control-turnos-6b394.web.app** — verificada en vivo: carga la pantalla de acceso y,
+como administrador, el calendario trae los datos reales desde Firestore (no solo en local).
+
 **Pendiente para la próxima sesión (heredado del PDF, sin resolver aún):**
-- Desplegar a Firebase Hosting de verdad (`firebase login` → `npm run build` →
-  `firebase deploy --only hosting --project control-turnos-6b394`) para tener una URL real
-  además del dev server local.
 - Diseño de un login/PIN para "Soy administrador" (hoy entra cualquiera sin contraseña) —
   no urgente, preguntarle al usuario si lo quiere.
 - Reglas de seguridad de Firestore actuales son permisivas a propósito (`allow read, write:
