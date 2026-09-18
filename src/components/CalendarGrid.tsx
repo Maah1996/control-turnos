@@ -23,6 +23,10 @@ interface Props {
 }
 
 const MOTIVO_COLOR = '#64748b';
+// Referencia de jornada diaria "normal" para marcar un turno individual como largo —
+// horas netas (colación ya descontada, ver Art. 34 Código del Trabajo). Distinta del tope
+// legal semanal (42h/6 días ≈ 7h/día, ver lib/laborLaw.ts), que se evalúa en la semana completa.
+const DAILY_REFERENCE_MINUTES = 8 * 60;
 
 export function CalendarGrid({
   days, workers, allWorkers, shifts, shiftTypes, motivos, today,
@@ -158,15 +162,20 @@ export function CalendarGrid({
                       const t = typeById.get(s.shiftTypeId);
                       const isMotivo = s.shiftTypeId.startsWith(MOTIVO_PREFIX);
                       const mins = minutesBetween(s.start, s.end) - s.breakMinutes;
+                      // El tope diario se mide sobre las horas NETAS (ya descontada la colación):
+                      // el Art. 34 del Código del Trabajo dice que la colación no es imputable a
+                      // la jornada, así que un bloque 10:00–18:30 con 30 min de colación son 8h
+                      // trabajadas normales, no 8h30 — no corresponde marcarlo como extra.
+                      const dayExtraMinutes = isMotivo ? 0 : Math.max(0, mins - DAILY_REFERENCE_MINUTES);
                       return (
                         <button
                           key={s.id}
                           type="button"
-                          className="chip"
+                          className={'chip' + (dayExtraMinutes > 0 ? ' chip-overtime' : '')}
                           style={{ ['--chip' as string]: t?.color ?? '#888' }}
                           title={isMotivo
                             ? `${t?.name ?? ''} — clic para editar`
-                            : `${t?.name ?? ''} ${s.start}–${s.end} · colación ${s.breakMinutes} min — clic para editar`}
+                            : `${t?.name ?? ''} ${s.start}–${s.end} · colación ${s.breakMinutes} min${dayExtraMinutes > 0 ? ` · ${fmtHours(dayExtraMinutes)} sobre la jornada diaria de 8h` : ''} — clic para editar`}
                           onClick={(e) => { e.stopPropagation(); onShiftClick?.(s); }}
                         >
                           {isMotivo ? (
@@ -175,7 +184,12 @@ export function CalendarGrid({
                             <>
                               <span className="chip-code">{t?.code}</span>
                               <span className="chip-time">{s.start}–{s.end}</span>
-                              <span className="chip-net">{fmtHours(mins)}</span>
+                              <span className={'chip-net' + (dayExtraMinutes > 0 ? ' chip-net--over' : '')}>
+                                {fmtHours(mins)}
+                              </span>
+                              {dayExtraMinutes > 0 && (
+                                <span className="chip-extra">+{fmtHours(dayExtraMinutes)}</span>
+                              )}
                             </>
                           )}
                         </button>

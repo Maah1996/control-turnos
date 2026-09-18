@@ -357,6 +357,15 @@ body {
 
 .chip-net { font-size: 11px; color: var(--color-muted-foreground); font-family: var(--font-mono); }
 
+.chip-net--over { color: var(--color-destructive); font-weight: 700; }
+
+.chip-extra {
+  font-size: 10.5px; font-weight: 800; letter-spacing: .01em; color: var(--color-info);
+  font-family: var(--font-mono);
+}
+
+.chip-overtime { box-shadow: 0 0 0 1.5px var(--color-destructive), var(--shadow-1); }
+
 .chip-motivo { font-size: 12px; font-weight: 700; color: var(--chip); }
 
 .grid td.total { text-align: center; font-weight: 700; color: var(--color-foreground); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
