@@ -324,11 +324,11 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
       <section className="sheet">
         <div className="sheet-head">
           <div>
-            <h2>Calendario de Turnos</h2>
-            <p className="period">
-              {periodLabel}
-              {scope.length > 0 && <span className="period-scope"> · Sección: {scope.join(', ')}</span>}
-            </p>
+            <h2>
+              Calendario de Turnos
+              {scope.length > 0 && <span className="h2-scope"> · Sección: {scope.join(', ')}</span>}
+            </h2>
+            <p className="period">{periodLabel}</p>
           </div>
           <div className="sheet-head-right">
             <label className="field no-print">

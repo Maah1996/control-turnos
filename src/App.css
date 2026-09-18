@@ -201,9 +201,9 @@ body {
 
 .sheet-head h2 { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.015em; }
 
-.period { margin: 4px 0 0; color: var(--color-muted-foreground); font-size: 13px; font-weight: 600; }
+.h2-scope { color: var(--color-primary); font-weight: 700; }
 
-.period-scope { color: var(--color-primary); }
+.period { margin: 4px 0 0; color: var(--color-muted-foreground); font-size: 13px; font-weight: 600; }
 
 .sheet-head-right { display: flex; align-items: flex-end; gap: var(--space-4); flex-wrap: wrap; }
 
