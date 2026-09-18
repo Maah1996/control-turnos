@@ -14,6 +14,7 @@ import { AreaManager } from './components/AreaManager';
 import { WorkerManager } from './components/WorkerManager';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { RequestInbox } from './components/RequestInbox';
+import { MonthlyReport } from './components/MonthlyReport';
 import { EMPRESA, SHIFT_TYPES, WORKERS, buildMockShifts } from './data/mock';
 
 type WorkerModalState = { mode: 'new' } | { mode: 'edit'; worker: Worker } | null;
@@ -35,6 +36,7 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
   const [anchor, setAnchor] = useState<Date>(new Date());
   const [scope, setScope] = useState<string>('todos');
   const [inboxOpen, setInboxOpen] = useState(false);
+  const [monthlyReportOpen, setMonthlyReportOpen] = useState(false);
 
   // "Hoy" en estado, no en una constante fija: si la app queda abierta pasada
   // la medianoche, el día resaltado en el calendario se actualiza solo.
@@ -321,6 +323,7 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
             Solicitudes
             {pendientesCount > 0 && <span className="inbox-badge">{pendientesCount}</span>}
           </button>
+          <button className="ghost" onClick={() => setMonthlyReportOpen(true)}>Resumen mensual</button>
           <button className="ghost" onClick={() => window.print()}>Imprimir</button>
           <button className="danger-ghost" onClick={onSalir}>Salir</button>
         </div>
@@ -435,6 +438,12 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
             solicitudes={solicitudes}
             onResolver={resolverSolicitud}
           />
+        </Modal>
+      )}
+
+      {monthlyReportOpen && (
+        <Modal title="Resumen mensual de horas" onClose={() => setMonthlyReportOpen(false)}>
+          <MonthlyReport workers={workers} shifts={shifts} />
         </Modal>
       )}
 

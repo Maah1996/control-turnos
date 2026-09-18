@@ -22,3 +22,8 @@ export function weeklyLegalLimitHours(date: Date): number {
   }
   return limit;
 }
+
+// Referencia de jornada diaria "normal" para marcar un turno como largo — horas netas
+// (colación ya descontada, ver Art. 34 Código del Trabajo: la colación no es imputable a
+// la jornada). Distinta del tope legal semanal de arriba, que se evalúa en la semana completa.
+export const DAILY_REFERENCE_MINUTES = 8 * 60;

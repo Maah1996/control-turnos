@@ -2,7 +2,7 @@ import type { ScheduledShift, ShiftType, Worker } from '../types';
 import {
   dayShort, fmtHours, isSameDay, isWeekend, minutesBetween, startOfWeek, toISO,
 } from '../lib/dates';
-import { weeklyLegalLimitHours } from '../lib/laborLaw';
+import { DAILY_REFERENCE_MINUTES, weeklyLegalLimitHours } from '../lib/laborLaw';
 import { MOTIVO_PREFIX } from './ShiftForm';
 
 interface Props {
@@ -23,10 +23,6 @@ interface Props {
 }
 
 const MOTIVO_COLOR = '#64748b';
-// Referencia de jornada diaria "normal" para marcar un turno individual como largo —
-// horas netas (colación ya descontada, ver Art. 34 Código del Trabajo). Distinta del tope
-// legal semanal (42h/6 días ≈ 7h/día, ver lib/laborLaw.ts), que se evalúa en la semana completa.
-const DAILY_REFERENCE_MINUTES = 8 * 60;
 
 export function CalendarGrid({
   days, workers, allWorkers, shifts, shiftTypes, motivos, today,
@@ -48,16 +44,15 @@ export function CalendarGrid({
         && days.some((d) => toISO(d) === s.date))
       .reduce((acc, s) => acc + minutesBetween(s.start, s.end) - s.breakMinutes, 0);
 
-  // Horas extra: tope legal semanal (42h desde abr-2026, ver lib/laborLaw.ts), calculado
-  // de lunes a sábado — el domingo es descanso y no cuenta para la jornada ordinaria.
-  // Se agrupa por semana calendario (lunes de esa semana) para que también funcione en
-  // las vistas Quincena/Mes, que muestran más de una semana a la vez.
+  // Horas extra: todo lo que pase el tope legal semanal (42h desde abr-2026, ver
+  // lib/laborLaw.ts) sobre el total de la semana completa. Se agrupa por semana calendario
+  // (lunes de esa semana) para que también funcione en las vistas Quincena/Mes, que
+  // muestran más de una semana a la vez.
   const weeklyLimitMinutes = weeklyLegalLimitHours(today) * 60;
 
   const workerExtraMinutes = (workerId: string) => {
     const minutesByWeek = new Map<string, number>();
     for (const d of days) {
-      if (d.getDay() === 0) continue; // domingo
       const iso = toISO(d);
       const weekKey = toISO(startOfWeek(d));
       const dayMinutes = shiftsFor(workerId, iso)
