@@ -40,7 +40,10 @@ export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props)
   const [weeklyHours, setWeeklyHours] = useState(initial?.weeklyHours ?? 42);
   const [status, setStatus] = useState<WorkerStatus>(initial?.status ?? 'activo');
   const [color, setColor] = useState(initial?.color ?? PALETTE[0]);
+  const [code, setCode] = useState(initial?.code ?? '');
   const [error, setError] = useState('');
+
+  const randomCode = () => String(Math.floor(1000 + Math.random() * 9000));
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -59,6 +62,8 @@ export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props)
       hireDate: initial?.hireDate ?? new Date().toISOString().slice(0, 10),
       status,
       color,
+      // Firestore rechaza `undefined` en un campo: solo se incluye si hay código.
+      ...(code.trim() ? { code: code.trim() } : {}),
     });
   };
 
@@ -116,6 +121,28 @@ export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props)
           </select>
         </label>
       </div>
+
+      <div className="form-row">
+        <label className="form-field">
+          <span>Código de acceso al portal</span>
+          <input
+            value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="Ej: 4821" inputMode="numeric"
+          />
+        </label>
+        <div className="form-field">
+          <span>&nbsp;</span>
+          <button type="button" className="ghost sm" onClick={() => setCode(randomCode())}>
+            Generar código
+          </button>
+        </div>
+      </div>
+
+      {code && (
+        <p className="form-context">
+          Este trabajador entra a su portal con el código <strong>{code}</strong> — díctaselo o anótalo, no necesita correo ni contraseña.
+        </p>
+      )}
 
       <div className="form-field">
         <span>Color en la planilla</span>

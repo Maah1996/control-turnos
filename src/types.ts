@@ -21,6 +21,7 @@ export interface Worker {
   hireDate: string; // ISO yyyy-mm-dd
   status: WorkerStatus;
   color: string; // color en la planilla
+  code?: string; // código de acceso al portal del trabajador (4-6 dígitos)
 }
 
 export interface ShiftType {
@@ -49,3 +50,22 @@ export interface ScheduledShift {
 }
 
 export type ViewMode = 'semana' | 'quincena' | 'mes';
+
+// Solicitud de cambio hecha por un trabajador desde su portal.
+export type SolicitudTipo = 'cambio_horario' | 'dia_libre' | 'reemplazo';
+export type SolicitudEstado = 'pendiente' | 'aprobada' | 'rechazada';
+
+export interface SolicitudCambio {
+  id: string;
+  workerId: string;
+  workerName: string; // copiado al crear, para que la bandeja no dependa de un join
+  iso: string; // día al que afecta
+  tipo: SolicitudTipo;
+  motivo: string;
+  reemplazoWorkerId?: string; // solo si tipo === 'reemplazo'
+  reemplazoWorkerName?: string;
+  estado: SolicitudEstado;
+  respuestaAdmin?: string;
+  creadoEn: string; // ISO datetime
+  resueltoEn?: string; // ISO datetime
+}
