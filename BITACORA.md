@@ -34,19 +34,30 @@ El prompt maestro pedía **React + Vite + Supabase**. Se optó por **React + Vit
 
 ## ▶ PARA RETOMAR (leer esto al iniciar la próxima sesión)
 
-**Estado actual (cierre de sesión 3, 18-sep-2026):** la app ahora tiene **dos entradas**
-(`RoleGate`): administrador y trabajador. El administrador ve el mismo **Calendario de
-Turnos** de siempre (semana/quincena/mes, CRUD de trabajadores/secciones/turnos, motivo de
-ausencia fusionado en "Tipo de turno") más una bandeja de **Solicitudes**. Cada trabajador
-entra a su propio portal con un **código de 4-6 dígitos** (sin correo ni contraseña), ve su
-horario real y puede pedir cambios/día libre/reemplazo, que el administrador aprueba o
-rechaza. **Toda la persistencia pasó de `localStorage` a Firebase** (Firestore + Auth anónima,
-proyecto `control-turnos-6b394`, plan Spark gratuito, región `southamerica-west1`) — admin y
-trabajadores ven los mismos datos en tiempo real. Verificado en vivo de punta a punta contra
-Firebase real (ver Sesión 3). Paleta visual vigente: marino institucional + teal + oro
-("misma familia que Control Horarios", subida por el usuario directo a GitHub).
-**Desplegado a Firebase Hosting: https://control-turnos-6b394.web.app** (verificado en vivo
-tras el deploy — carga y habla con Firestore desde el dominio real, no solo en local).
+**Estado actual (cierre de sesión 4, 18-sep-2026):** la app tiene **dos entradas** (`RoleGate`):
+administrador y trabajador. El administrador ve el **Calendario de Turnos** (semana/quincena/
+mes, CRUD de trabajadores/secciones/turnos, motivo de ausencia fusionado en "Tipo de turno"),
+una bandeja de **Solicitudes**, y el nuevo **"Resumen mensual"** con horas legales/extra/total
+por trabajador y detalle día por día. Cada trabajador entra a su portal con un **código de
+4-6 dígitos**, ve su horario y pide cambios. **Toda la persistencia vive en Firebase**
+(Firestore + Auth anónima, proyecto `control-turnos-6b394`) — admin y trabajadores ven los
+mismos datos en tiempo real. **Desplegado en https://control-turnos-6b394.web.app**
+(actualizado tras cada commit de la Sesión 4).
+
+**Motor de horas extra (nuevo, Sesión 4) — cómo funciona hoy:**
+- Tope semanal **propio de cada trabajador** (`Worker.weeklyHours`, editable en
+  "Trabajadores"; 42h por defecto = jornada completa, menos si es part-time), no un número
+  fijo igual para todos. Función clave: `workerWeeklyLimitMinutes()` en `lib/laborLaw.ts`.
+- El excedente semanal se reparte con `splitWeeklyLegalAndExtra()` (mismo archivo): agrupa
+  por semana calendario y atribuye las horas extra a los últimos días trabajados de esa
+  semana, en orden cronológico — mismo criterio en la columna "Horas" del calendario y en el
+  Resumen mensual (antes usaban métodos distintos; se unificó).
+- Además, cada turno individual se marca aparte si sus horas **netas** (colación ya
+  descontada — Art. 34 Código del Trabajo) pasan de 8h ese día (`DAILY_REFERENCE_MINUTES`),
+  independiente del cálculo semanal — un trabajador puede tener un día largo sin por eso
+  pasarse de su tope semanal.
+- Formato visual (decisión explícita del usuario): nunca mostrar el total en rojo como si
+  fuera un error — siempre "horas normales" (neutro) + "+extra" (azul) + "total" aparte.
 
 **Siguiente sesión — hacer, en orden:**
 1. Preguntar al usuario si quiere un PIN/login para "Soy administrador" (hoy entra cualquiera
@@ -57,6 +68,10 @@ tras el deploy — carga y habla con Firestore desde el dominio real, no solo en
 4. Selector de rango personalizado (hoy: semana / quincena / mes fijos).
 5. Arreglar superposición de chips en vista **Mes** (columnas muy angostas,
    `table-layout: fixed`) — detectado en sesión 2, sigue pendiente.
+6. El Resumen mensual calcula cada semana con los datos que caigan dentro del mes elegido —
+   una semana que cruza fin de mes (ej. últimos días de agosto + primeros de septiembre) se
+   evalúa por separado en cada resumen, sin ver la semana completa. Simplificación aceptada
+   por ahora; revisar si en algún mes da resultados raros en el límite.
 
 **Pendientes de fondo (no bloquean, anotados para no olvidar):**
 - Definir si el registro de asistencia será "registro oficial" (estándar RCE de la Dirección
@@ -664,8 +679,88 @@ como administrador, el calendario trae los datos reales desde Firestore (no solo
 rediseño de paleta subido por el usuario a GitHub) — ambos en `Maah1996/control-turnos`,
 rama `main`.
 
-**Confirmado en vivo por el usuario:** (pendiente — el usuario debe revisar la app y esta
-bitácora)
+**Confirmado en vivo por el usuario:** sí — el usuario siguió usando y probando la app
+desplegada durante la Sesión 4 (mismo día), lo que sirvió también de prueba en vivo de esta
+sesión.
+
+---
+
+### Sesión 4 — 2026-09-18 (misma tarde, continuación de la Sesión 3)
+
+**Motor de horas extra, de punta a punta.** El usuario fue probando la app recién desplegada
+(https://control-turnos-6b394.web.app) y, sobre la marcha, pidió — en varias iteraciones —
+que el sistema calculara y mostrara correctamente las horas extra, tanto por turno como por
+semana y por mes. Se construyó todo en esta sesión, con dos correcciones de rumbo importantes
+hechas a pedido del propio usuario tras revisar los resultados.
+
+**1. Bug real: "Guardar" no guardaba el turno.** Mismo patrón de los bugs de la Sesión 3:
+`ShiftForm.tsx` mandaba `notes: undefined` cuando el campo Notas quedaba vacío, y Firestore
+rechaza ese valor — el guardado fallaba en silencio. Se omite el campo en vez de enviarlo
+como `undefined`.
+
+**2. Hora de término automática.** Al cambiar "Hora inicio" en el formulario de turno, "Hora
+término" se recalcula sola manteniendo la duración del tipo de turno elegido (ej. Mañana =
+8h30 brutas); sigue editable a mano después (`handleStartChange` en `ShiftForm.tsx`,
+`addMinutesToTime` nuevo en `lib/dates.ts`).
+
+**3. Marca de jornada diaria por turno — con una corrección legal a mitad de camino.** Primera
+versión: se marcaba en rojo cuando el **bloque completo** (hora término − hora inicio, sin
+descontar colación) pasaba de 8h. El usuario pidió verificar la ley antes de dar esto por
+bueno — se revisó el **art. 34 del Código del Trabajo**: la colación **no es imputable a la
+jornada** (no cuenta como trabajada), así que un turno 10:00–18:30 con 30 min de colación son
+8h trabajadas normales, no 8h30. Se corrigió para comparar **horas netas** (colación ya
+descontada) contra la referencia de 8h — ver `DAILY_REFERENCE_MINUTES` en `lib/laborLaw.ts`.
+
+**4. Insignia semanal de horas extra (columna "Horas" del calendario) — dos rondas de ajuste:**
+- Primera versión: tope fijo de 42h para todos, calculado de lunes a sábado (excluyendo
+  domingo). El usuario detectó que una semana con 48h totales (incluyendo un turno en
+  domingo) no se marcaba — se corrigió para contar los 7 días de la semana.
+- Segunda corrección, más de fondo: el tope **no debe ser el mismo número fijo para todos**
+  — cada trabajador ya tiene su propio campo `weeklyHours` en "Trabajadores" (42h por defecto
+  para jornada completa, menos si es part-time — Rosa Elena Mansilla tiene 30h). Se agregó
+  `workerWeeklyLimitMinutes()` (tope propio de cada trabajador, topado igual por el máximo
+  legal vigente) y `splitWeeklyLegalAndExtra()` en `lib/laborLaw.ts`, que reparte las horas
+  netas trabajadas en "legales" y "extra" agrupando por semana calendario y atribuyendo el
+  excedente a los últimos días trabajados de la semana en orden cronológico (mismo criterio
+  con que se cuentan las horas extraordinarias). Verificado en vivo: Camila (42h contratadas)
+  → "42 h / +6 h"; Rosa (30h contratadas, part-time) → "30 h / +7:30 h" en vez de quedar
+  camuflada bajo el tope de los demás.
+
+**5. Pantalla nueva "Resumen mensual de horas"** (`src/components/MonthlyReport.tsx`, botón en
+la barra superior del calendario): tabla por trabajador con **Legales / Extra / Total** del
+mes, navegable mes a mes. Usa la misma función `splitWeeklyLegalAndExtra()` que la columna
+semanal (antes usaba un método distinto, por día — se unificó tras la corrección del punto 4).
+El valor de "Extra" es clicable → detalle día por día (ej. "Domingo, 20 de septiembre de
+2026 — +7:30 h") hasta completar el total del mes, con botón "← Volver al resumen". Probado
+en vivo con el caso de Rosa: 3 domingos de +7:30h cada uno = 22:30h del mes, matemáticamente
+correcto.
+
+**6. Rediseño del formato de horas extra — a pedido del usuario, "para que no confunda".**
+Mostrar las horas netas completas del día en rojo (ej. "11 h") hacía parecer que toda la
+jornada era un problema, cuando en realidad 8h de esas son normales. Se separaron las tres
+cifras con su propio color/peso: horas normales ("8 h", color neutro), excedente ("+3 h",
+azul) y el total del día aparte ("11 h totales"). Mismo critero en la columna "Horas" de la
+semana (ej. "42 h +6 h" y, debajo, "48 h en la semana"). El aro de aviso alrededor del turno
+con horas extra pasó de rojo a azul, porque ya no es una alerta sino solo informativo.
+
+**Verificado en vivo, en el navegador real (no local, contra la app ya desplegada), en cada
+paso:** login de administrador → crear/editar turnos con distintas duraciones → activar la
+insignia diaria y semanal a propósito (agregando y luego quitando turnos de prueba) →
+Resumen mensual → detalle día por día. Sin errores de consola en ningún punto. `tsc -b` y
+`vite build` limpios en cada commit.
+
+**Archivos nuevos:** `src/lib/laborLaw.ts` (creado en el punto 3, ampliado en el punto 4),
+`src/components/MonthlyReport.tsx`.
+
+**Archivos modificados:** `src/components/ShiftForm.tsx`, `src/components/CalendarGrid.tsx`,
+`src/AdminApp.tsx`, `src/lib/dates.ts`, `src/App.css`.
+
+**Commits:** `db477ba`, `8e36cad`, `ac25d5d`, `a8ad0e7`, `82dff25` — todos en
+`Maah1996/control-turnos`, rama `main`, cada uno desplegado a
+https://control-turnos-6b394.web.app apenas confirmado en local.
+
+**Confirmado en vivo por el usuario:** sí, en cada paso — el usuario fue guiando los ajustes
+en tiempo real mientras probaba la app desplegada.
 
 ---
 ---
