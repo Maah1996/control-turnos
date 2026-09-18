@@ -1,7 +1,8 @@
 import type { ScheduledShift, ShiftType, Worker } from '../types';
 import {
-  dayShort, fmtHours, isSameDay, isWeekend, minutesBetween, toISO,
+  dayShort, fmtHours, isSameDay, isWeekend, minutesBetween, startOfWeek, toISO,
 } from '../lib/dates';
+import { weeklyLegalLimitHours } from '../lib/laborLaw';
 import { MOTIVO_PREFIX } from './ShiftForm';
 
 interface Props {
@@ -42,6 +43,29 @@ export function CalendarGrid({
       .filter((s) => s.workerId === workerId && s.status !== 'anulado'
         && days.some((d) => toISO(d) === s.date))
       .reduce((acc, s) => acc + minutesBetween(s.start, s.end) - s.breakMinutes, 0);
+
+  // Horas extra: tope legal semanal (42h desde abr-2026, ver lib/laborLaw.ts), calculado
+  // de lunes a sábado — el domingo es descanso y no cuenta para la jornada ordinaria.
+  // Se agrupa por semana calendario (lunes de esa semana) para que también funcione en
+  // las vistas Quincena/Mes, que muestran más de una semana a la vez.
+  const weeklyLimitMinutes = weeklyLegalLimitHours(today) * 60;
+
+  const workerExtraMinutes = (workerId: string) => {
+    const minutesByWeek = new Map<string, number>();
+    for (const d of days) {
+      if (d.getDay() === 0) continue; // domingo
+      const iso = toISO(d);
+      const weekKey = toISO(startOfWeek(d));
+      const dayMinutes = shiftsFor(workerId, iso)
+        .reduce((acc, s) => acc + minutesBetween(s.start, s.end) - s.breakMinutes, 0);
+      minutesByWeek.set(weekKey, (minutesByWeek.get(weekKey) ?? 0) + dayMinutes);
+    }
+    let extra = 0;
+    for (const mins of minutesByWeek.values()) {
+      if (mins > weeklyLimitMinutes) extra += mins - weeklyLimitMinutes;
+    }
+    return extra;
+  };
 
   return (
     <div className="grid-scroll">
@@ -160,7 +184,14 @@ export function CalendarGrid({
                   </td>
                 );
               })}
-              <td className="total">{fmtHours(workerWeekMinutes(w.id))}</td>
+              <td className="total">
+                <span className="total-hours">{fmtHours(workerWeekMinutes(w.id))}</span>
+                {workerExtraMinutes(w.id) > 0 && (
+                  <span className="total-overtime" title="Horas extra sobre el tope legal semanal">
+                    +{fmtHours(workerExtraMinutes(w.id))}
+                  </span>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

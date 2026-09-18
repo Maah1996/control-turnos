@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { ScheduledShift, ShiftType } from '../types';
+import { addMinutesToTime, minutesBetween } from '../lib/dates';
 
 interface Props {
   workerName: string;
@@ -54,6 +55,18 @@ export function ShiftForm({
     }
   };
 
+  // Al cambiar la hora de inicio, la hora de término se recalcula sola manteniendo la
+  // duración del tipo de turno elegido (ej. Mañana = 8h30 brutas) — el campo de término
+  // sigue siendo editable a mano después, por si ese día necesita un horario distinto.
+  const handleStartChange = (value: string) => {
+    setStart(value);
+    const t = shiftTypes.find((s) => s.id === shiftTypeId);
+    if (t) {
+      const durationMinutes = minutesBetween(t.defaultStart, t.defaultEnd);
+      setEnd(addMinutesToTime(value, durationMinutes));
+    }
+  };
+
   const confirmNewMotivo = () => {
     const clean = newMotivo.trim();
     if (!clean) { setAddingMotivo(false); return; }
@@ -65,7 +78,12 @@ export function ShiftForm({
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    onSave({ shiftTypeId, start, end, breakMinutes: Number(breakMinutes) || 0, notes: notes.trim() || undefined });
+    onSave({
+      shiftTypeId, start, end, breakMinutes: Number(breakMinutes) || 0,
+      // Firestore rechaza `undefined` en un campo: se omite en vez de enviarse como undefined
+      // (era la causa de que "Guardar" no guardara nada cuando Notas quedaba vacío).
+      ...(notes.trim() ? { notes: notes.trim() } : {}),
+    });
   };
 
   return (
@@ -108,7 +126,7 @@ export function ShiftForm({
         <div className="form-row">
           <label className="form-field">
             <span>Hora inicio</span>
-            <input type="time" value={start} onChange={(e) => setStart(e.target.value)} />
+            <input type="time" value={start} onChange={(e) => handleStartChange(e.target.value)} />
           </label>
           <label className="form-field">
             <span>Hora término</span>

@@ -23,6 +23,8 @@
   /* alias para las insignias de "pendiente" del portal de trabajadores y la bandeja de solicitudes */
   --color-cta: var(--color-gold);
   --color-cta-hover: #e5aa42;
+  /* azul informativo para la insignia de horas extra del calendario (distinto del marino primario) */
+  --color-info: #2563eb;
 
   /* alias retro-compatibles usados en el resto del archivo */
   --bg: var(--color-background);
@@ -358,6 +360,13 @@ body {
 .chip-motivo { font-size: 12px; font-weight: 700; color: var(--chip); }
 
 .grid td.total { text-align: center; font-weight: 700; color: var(--color-foreground); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.total-hours { display: block; }
+
+.total-overtime {
+  display: block; margin-top: 2px; font-size: 10.5px; font-weight: 800; letter-spacing: .01em;
+  color: var(--color-info);
+}
 
 .add-row-cell { padding: var(--space-3); text-align: center; }
 

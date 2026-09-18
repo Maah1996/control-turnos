@@ -88,6 +88,16 @@ export function minutesBetween(start: string, end: string): number {
   return mins;
 }
 
+/** Suma minutos a una hora "HH:mm", dando la vuelta después de medianoche. */
+export function addMinutesToTime(time: string, minutes: number): string {
+  const [h, m] = time.split(':').map(Number);
+  let total = (h * 60 + m + minutes) % (24 * 60);
+  if (total < 0) total += 24 * 60;
+  const hh = String(Math.floor(total / 60)).padStart(2, '0');
+  const mm = String(total % 60).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
 export function fmtHours(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;

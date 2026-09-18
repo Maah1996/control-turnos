@@ -208,7 +208,11 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
     if (!shiftModal) return;
     const { workerId, iso, shift } = shiftModal;
     if (shift) {
-      shiftsSync.save({ ...shift, ...data });
+      // `data.notes` viene ausente (no undefined) cuando el campo Notas quedó vacío —
+      // hay que sacarlo también de `shift` o el valor anterior quedaría pegado.
+      const shiftWithoutNotes: ScheduledShift = { ...shift };
+      delete shiftWithoutNotes.notes;
+      shiftsSync.save({ ...shiftWithoutNotes, ...data });
     } else {
       shiftsSync.save({ id: newShiftId(), workerId, date: iso, status: 'publicado', ...data });
     }
