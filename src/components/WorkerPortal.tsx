@@ -5,15 +5,8 @@ import {
 } from '../lib/dates';
 import { useFirestoreCollection } from '../lib/firestoreSync';
 import { WORKERS, buildMockShifts } from '../data/mock';
+import { motivoColor } from '../lib/motivoColors';
 import { MOTIVO_PREFIX } from './ShiftForm';
-
-const MOTIVO_COLORS: Record<string, string> = {
-  'Vacaciones': '#0ea5e9',
-  'Permiso': '#a855f7',
-  'Licencia médica': '#f97316',
-  'Falta al trabajo': '#dc2626',
-  'Día libre': '#94a3b8',
-};
 
 const TIPO_OPTIONS: { value: SolicitudTipo; label: string }[] = [
   { value: 'cambio_horario', label: 'Cambiar el horario de ese día' },
@@ -186,7 +179,7 @@ export function WorkerPortal({ onSalir }: Props) {
                     isMotivo ? (
                       <span
                         className="portal-day-chip"
-                        style={{ ['--chip' as string]: MOTIVO_COLORS[motivoName ?? ''] ?? '#64748b' }}
+                        style={{ ['--chip' as string]: motivoColor(motivoName ?? '') }}
                       >
                         {motivoName === 'Día libre' ? 'DÍA LIBRE' : motivoName}
                       </span>

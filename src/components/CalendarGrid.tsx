@@ -3,6 +3,7 @@ import {
   dayShort, fmtHours, isSameDay, isWeekend, minutesBetween, toISO,
 } from '../lib/dates';
 import { DAILY_REFERENCE_MINUTES, splitWeeklyLegalAndExtra, workerWeeklyLimitMinutes } from '../lib/laborLaw';
+import { motivoColor } from '../lib/motivoColors';
 import { MOTIVO_PREFIX } from './ShiftForm';
 
 interface Props {
@@ -22,8 +23,6 @@ interface Props {
   canAddRow?: boolean;
 }
 
-const MOTIVO_COLOR = '#64748b';
-
 export function CalendarGrid({
   days, workers, allWorkers, shifts, shiftTypes, motivos, today,
   onCellClick, onShiftClick, onWorkerClick, onDeleteWorker, onRowWorkerChange, onAddRow, canAddRow,
@@ -31,7 +30,7 @@ export function CalendarGrid({
   const motivoTypes: ShiftType[] = motivos.map((m) => ({
     id: MOTIVO_PREFIX + m, name: m, code: m.slice(0, 3).toUpperCase(),
     defaultStart: '00:00', defaultEnd: '00:00', crossesMidnight: false,
-    defaultBreakMinutes: 0, color: MOTIVO_COLOR,
+    defaultBreakMinutes: 0, color: motivoColor(m),
   }));
   const typeById = new Map([...shiftTypes, ...motivoTypes].map((t) => [t.id, t]));
 
