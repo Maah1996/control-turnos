@@ -207,7 +207,35 @@ body {
 
 .sheet-head-right { display: flex; align-items: flex-end; gap: var(--space-4); flex-wrap: wrap; }
 
-.sheet-head-right .field select { min-width: 170px; }
+/* ---------- SectionFilter (checkbox dropdown) ---------- */
+.section-filter { position: relative; min-width: 170px; }
+
+.section-filter-trigger {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  border: 1px solid transparent; border-radius: var(--radius-sm); padding: 9px 12px;
+  font-family: inherit; font-size: 13px; font-weight: 600; background: var(--color-card); color: var(--color-foreground);
+  cursor: pointer; box-shadow: var(--shadow-1); transition: box-shadow var(--transition);
+}
+.section-filter-trigger:hover { box-shadow: var(--shadow-2); }
+.section-filter-trigger:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
+.section-filter-trigger svg { width: 16px; height: 16px; flex: none; color: var(--color-muted-foreground); }
+
+.section-filter-panel {
+  position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; min-width: 100%; width: max-content;
+  background: var(--color-card); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-3); padding: var(--space-2); display: flex; flex-direction: column; gap: 2px;
+}
+
+.section-filter-option {
+  display: flex; align-items: center; gap: var(--space-2); padding: 7px 8px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500; color: var(--color-foreground); cursor: pointer; white-space: nowrap;
+  transition: background var(--transition);
+}
+.section-filter-option:hover { background: var(--color-muted); }
+.section-filter-option input { accent-color: var(--color-primary); width: 15px; height: 15px; cursor: pointer; }
+.section-filter-option--all { font-weight: 700; }
+
+.section-filter-divider { height: 1px; background: var(--color-border); margin: 3px 2px; }
 
 .legend { display: flex; gap: var(--space-2); flex-wrap: wrap; font-size: 12px; color: var(--color-muted-foreground); }
 

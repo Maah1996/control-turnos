@@ -15,6 +15,7 @@ import { WorkerManager } from './components/WorkerManager';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { RequestInbox } from './components/RequestInbox';
 import { MonthlyReport } from './components/MonthlyReport';
+import { SectionFilter } from './components/SectionFilter';
 import { EMPRESA, SHIFT_TYPES, WORKERS, buildMockShifts } from './data/mock';
 
 type WorkerModalState = { mode: 'new' } | { mode: 'edit'; worker: Worker } | null;
@@ -34,7 +35,8 @@ function newShiftId() {
 export default function AdminApp({ onSalir }: { onSalir: () => void }) {
   const [view, setView] = useState<ViewMode>('semana');
   const [anchor, setAnchor] = useState<Date>(new Date());
-  const [scope, setScope] = useState<string>('todos');
+  // Vacío = "Completo" (todas las secciones); si no, solo las áreas elegidas.
+  const [scope, setScope] = useState<string[]>([]);
   const [inboxOpen, setInboxOpen] = useState(false);
   const [monthlyReportOpen, setMonthlyReportOpen] = useState(false);
 
@@ -122,8 +124,8 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
   );
 
   const visibleWorkers = useMemo(() => {
-    if (scope === 'todos') return activeWorkers;
-    return activeWorkers.filter((w) => w.area === scope);
+    if (scope.length === 0) return activeWorkers;
+    return activeWorkers.filter((w) => scope.includes(w.area));
   }, [activeWorkers, scope]);
 
   // El filtro de Alcance define, por defecto, quién va en cada fila; un cambio manual
@@ -325,18 +327,13 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
             <h2>Calendario de Turnos</h2>
             <p className="period">
               {periodLabel}
-              {scope !== 'todos' && <span className="period-scope"> · Sección: {scope}</span>}
+              {scope.length > 0 && <span className="period-scope"> · Sección: {scope.join(', ')}</span>}
             </p>
           </div>
           <div className="sheet-head-right">
             <label className="field no-print">
               <span>Sección a trabajar / imprimir</span>
-              <select value={scope} onChange={(e) => setScope(e.target.value)}>
-                <option value="todos">Completo</option>
-                {areas.map((a) => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-              </select>
+              <SectionFilter areas={areas} selected={scope} onChange={setScope} />
             </label>
             <div className="legend no-print">
               {SHIFT_TYPES.map((t) => (
