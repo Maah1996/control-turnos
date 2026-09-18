@@ -301,16 +301,6 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
             ))}
           </div>
 
-          <label className="field">
-            <span>Alcance</span>
-            <select value={scope} onChange={(e) => setScope(e.target.value)}>
-              <option value="todos">Todos los trabajadores</option>
-              {areas.map((a) => (
-                <option key={a} value={a}>Área: {a}</option>
-              ))}
-            </select>
-          </label>
-
           <div className="nav">
             <button onClick={() => step(-1)} aria-label="Anterior">‹</button>
             <button onClick={() => setAnchor(new Date())}>Hoy</button>
@@ -333,15 +323,29 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
         <div className="sheet-head">
           <div>
             <h2>Calendario de Turnos</h2>
-            <p className="period">{periodLabel}</p>
+            <p className="period">
+              {periodLabel}
+              {scope !== 'todos' && <span className="period-scope"> · Sección: {scope}</span>}
+            </p>
           </div>
-          <div className="legend no-print">
-            {SHIFT_TYPES.map((t) => (
-              <span key={t.id} className="legend-item">
-                <span className="dot" style={{ background: t.color }} />
-                {t.name} <small>({t.defaultStart}–{t.defaultEnd})</small>
-              </span>
-            ))}
+          <div className="sheet-head-right">
+            <label className="field no-print">
+              <span>Sección a trabajar / imprimir</span>
+              <select value={scope} onChange={(e) => setScope(e.target.value)}>
+                <option value="todos">Completo</option>
+                {areas.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            </label>
+            <div className="legend no-print">
+              {SHIFT_TYPES.map((t) => (
+                <span key={t.id} className="legend-item">
+                  <span className="dot" style={{ background: t.color }} />
+                  {t.name} <small>({t.defaultStart}–{t.defaultEnd})</small>
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
