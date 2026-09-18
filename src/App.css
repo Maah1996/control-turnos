@@ -636,10 +636,15 @@ body {
   .grid tr { break-inside: avoid; }
   .grid td.cell { height: auto; }
   .grid td.cell.empty::after { content: ''; }
-  .chip { border-left-width: 3px; }
+  .chip { border-left-width: 3px; box-shadow: none !important; }
   .worker-delete { display: none; }
   .worker-swap-label { display: none; }
   tfoot { display: none; }
+
+  /* Impresión pública (vitrina): solo el horario normal, sin horas extra ni el total
+     semanal — esa información queda para uso interno, no para exhibir. */
+  .chip-extra, .chip-total { display: none; }
+  .grid .totalcol, .grid td.total { display: none; }
 }
 
 /* ---------- RoleGate ---------- */
