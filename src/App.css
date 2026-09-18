@@ -355,26 +355,38 @@ body {
 
 .chip-time { font-size: 12px; color: var(--color-foreground); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
-.chip-net { font-size: 11px; color: var(--color-muted-foreground); font-family: var(--font-mono); }
+.chip-hours-row { display: flex; align-items: baseline; gap: 5px; }
 
-.chip-net--over { color: var(--color-destructive); font-weight: 700; }
+.chip-net { font-size: 11px; color: var(--color-muted-foreground); font-family: var(--font-mono); }
 
 .chip-extra {
   font-size: 10.5px; font-weight: 800; letter-spacing: .01em; color: var(--color-info);
   font-family: var(--font-mono);
 }
 
-.chip-overtime { box-shadow: 0 0 0 1.5px var(--color-destructive), var(--shadow-1); }
+.chip-total {
+  font-size: 10px; color: var(--color-foreground); font-weight: 700; font-family: var(--font-mono);
+  margin-top: 1px;
+}
+
+.chip-overtime { box-shadow: 0 0 0 1.5px var(--color-info), var(--shadow-1); }
 
 .chip-motivo { font-size: 12px; font-weight: 700; color: var(--chip); }
 
 .grid td.total { text-align: center; font-weight: 700; color: var(--color-foreground); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
+.total-hours-row { display: flex; align-items: baseline; justify-content: center; gap: 5px; }
+
 .total-hours { display: block; }
 
 .total-overtime {
-  display: block; margin-top: 2px; font-size: 10.5px; font-weight: 800; letter-spacing: .01em;
+  font-size: 10.5px; font-weight: 800; letter-spacing: .01em;
   color: var(--color-info);
+}
+
+.total-sum {
+  display: block; margin-top: 2px; font-size: 10px; font-weight: 600; color: var(--color-muted-foreground);
+  font-family: var(--font-sans);
 }
 
 .add-row-cell { padding: var(--space-3); text-align: center; }

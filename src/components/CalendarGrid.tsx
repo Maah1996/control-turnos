@@ -147,6 +147,7 @@ export function CalendarGrid({
                       // la jornada, así que un bloque 10:00–18:30 con 30 min de colación son 8h
                       // trabajadas normales, no 8h30 — no corresponde marcarlo como extra.
                       const dayExtraMinutes = isMotivo ? 0 : Math.max(0, mins - DAILY_REFERENCE_MINUTES);
+                      const dayLegalMinutes = mins - dayExtraMinutes;
                       return (
                         <button
                           key={s.id}
@@ -164,11 +165,14 @@ export function CalendarGrid({
                             <>
                               <span className="chip-code">{t?.code}</span>
                               <span className="chip-time">{s.start}–{s.end}</span>
-                              <span className={'chip-net' + (dayExtraMinutes > 0 ? ' chip-net--over' : '')}>
-                                {fmtHours(mins)}
+                              <span className="chip-hours-row">
+                                <span className="chip-net">{fmtHours(dayLegalMinutes)}</span>
+                                {dayExtraMinutes > 0 && (
+                                  <span className="chip-extra">+{fmtHours(dayExtraMinutes)}</span>
+                                )}
                               </span>
                               {dayExtraMinutes > 0 && (
-                                <span className="chip-extra">+{fmtHours(dayExtraMinutes)}</span>
+                                <span className="chip-total">{fmtHours(mins)} totales</span>
                               )}
                             </>
                           )}
@@ -179,13 +183,18 @@ export function CalendarGrid({
                 );
               })}
               <td className="total">
-                <span className="total-hours" title="Horas dentro de la jornada semanal contratada">
-                  {fmtHours(legalMinutes)}
+                <span className="total-hours-row">
+                  <span className="total-hours" title="Horas dentro de la jornada semanal contratada">
+                    {fmtHours(legalMinutes)}
+                  </span>
+                  {extraMinutes > 0 && (
+                    <span className="total-overtime" title="Horas extra sobre la jornada semanal contratada">
+                      +{fmtHours(extraMinutes)}
+                    </span>
+                  )}
                 </span>
                 {extraMinutes > 0 && (
-                  <span className="total-overtime" title="Horas extra sobre la jornada semanal contratada">
-                    +{fmtHours(extraMinutes)}
-                  </span>
+                  <span className="total-sum">{fmtHours(legalMinutes + extraMinutes)} en la semana</span>
                 )}
               </td>
             </tr>
