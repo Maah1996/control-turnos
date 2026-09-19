@@ -34,17 +34,29 @@ El prompt maestro pedía **React + Vite + Supabase**. Se optó por **React + Vit
 
 ## ▶ PARA RETOMAR (leer esto al iniciar la próxima sesión)
 
-**Estado actual (cierre de sesión 4, 18-sep-2026):** la app tiene **dos entradas** (`RoleGate`):
-administrador y trabajador. El administrador ve el **Calendario de Turnos** (semana/quincena/
-mes, CRUD de trabajadores/secciones/turnos, motivo de ausencia fusionado en "Tipo de turno"),
-una bandeja de **Solicitudes**, y el nuevo **"Resumen mensual"** con horas legales/extra/total
-por trabajador y detalle día por día. Cada trabajador entra a su portal con un **código de
-4-6 dígitos**, ve su horario y pide cambios. **Toda la persistencia vive en Firebase**
-(Firestore + Auth anónima, proyecto `control-turnos-6b394`) — admin y trabajadores ven los
-mismos datos en tiempo real. **Desplegado en https://control-turnos-6b394.web.app**
-(actualizado tras cada commit de la Sesión 4).
+**Estado actual (cierre de sesión 5, 19-sep-2026):** la app tiene **dos entradas** (`RoleGate`):
+administrador y trabajador. **Administrador:** Calendario de Turnos (semana/quincena/mes) con
+filtro de **secciones por casillas** (una, varias o "Completo"; el título muestra
+"· Sección: X"), resumen de **dotación M/F/TOT** en la cabecera, motivos de ausencia con
+**llenado por rango de días hábiles**, bandeja de **Solicitudes** (con PDF de licencia y saldo de
+feriado), y **Resumen mensual** de horas. **Trabajador** (código de 4-6 dígitos): su horario,
+"Pedir cambio" por día y la pestaña **Mis solicitudes** con el desplegable *Nueva solicitud*
+(vacaciones, reunión con el gerente, licencia con PDF, otro) y la tarjeta **Mi feriado legal**.
+**Toda la persistencia vive en Firebase** (Firestore + Auth anónima, proyecto
+`control-turnos-6b394`). **Desplegado en https://control-turnos-6b394.web.app** (actualizado
+tras cada commit). Repo `Maah1996/control-turnos`, rama `main`, último commit `55dbca4`.
 
-**Motor de horas extra (nuevo, Sesión 4) — cómo funciona hoy:**
+**Reglas que el usuario fijó y hay que respetar (Sesiones 4-5):**
+- **Colación NO cuenta como jornada** (Art. 34 CT): las horas se miden netas.
+- **Al imprimir** solo va el horario normal: sin horas extra, sin columna "Horas"; sí va el
+  título con la sección elegida y la dotación M/F/TOT. Queda espacio en la cabecera para el
+  **nombre de la empresa** (el usuario dijo que lo agregarán después).
+- **Días hábiles = lunes a viernes** (sábado siempre inhábil para feriado, Art. 69 CT).
+- Colores: **Vacaciones naranja** (`#fb923c`), **Día libre verde claro** (`#4ade80`) con letras
+  **negras en negrilla**; paleta única en `lib/motivoColors.ts` (calendario y portal).
+- Jamás mostrar horas extra en rojo alarmante: normales (neutro) + "+extra" (azul) + total.
+
+**Motor de horas extra (Sesión 4) — cómo funciona hoy:**
 - Tope semanal **propio de cada trabajador** (`Worker.weeklyHours`, editable en
   "Trabajadores"; 42h por defecto = jornada completa, menos si es part-time), no un número
   fijo igual para todos. Función clave: `workerWeeklyLimitMinutes()` en `lib/laborLaw.ts`.
@@ -59,19 +71,45 @@ mismos datos en tiempo real. **Desplegado en https://control-turnos-6b394.web.ap
 - Formato visual (decisión explícita del usuario): nunca mostrar el total en rojo como si
   fuera un error — siempre "horas normales" (neutro) + "+extra" (azul) + "total" aparte.
 
+**Feriado legal (Sesión 5) — cómo funciona hoy:** `lib/vacations.ts` → `calcularFeriado()`.
+15 días hábiles/año (Art. 67) + 1 por cada 3 años sobre 10 de antigüedad total (Art. 68; de los
+años con otros empleadores cuentan hasta 10). Período = aniversario a aniversario de
+`Worker.hireDate`. Los **tomados salen del calendario** (turnos `motivo:Vacaciones` en días
+hábiles), no de un contador: lo cargado a mano y lo aprobado por solicitud cuentan igual, y
+quitar un día lo devuelve. Las solicitudes pendientes **reservan** días. Campos nuevos en
+`Worker`: `priorYears`, `vacationTaken` (días tomados antes del sistema), `gender`.
+
 **Siguiente sesión — hacer, en orden:**
-1. Preguntar al usuario si quiere un PIN/login para "Soy administrador" (hoy entra cualquiera
-   sin contraseña).
-2. Revisar las reglas de seguridad de Firestore (hoy permisivas a propósito: cualquier sesión
-   anónima puede leer/escribir todo).
-3. ABM de trabajadores: falta edición **masiva** e importación desde Excel/CSV.
-4. Selector de rango personalizado (hoy: semana / quincena / mes fijos).
-5. Arreglar superposición de chips en vista **Mes** (columnas muy angostas,
-   `table-layout: fixed`) — detectado en sesión 2, sigue pendiente.
-6. El Resumen mensual calcula cada semana con los datos que caigan dentro del mes elegido —
-   una semana que cruza fin de mes (ej. últimos días de agosto + primeros de septiembre) se
-   evalúa por separado en cada resumen, sin ver la semana completa. Simplificación aceptada
-   por ahora; revisar si en algún mes da resultados raros en el límite.
+1. **Pendientes del usuario en los datos:** cargar la **fecha de ingreso real** de cada
+   trabajador (hoy es la fecha en que se creó en el sistema, así que el período y la antigüedad
+   no son los reales), el **sexo M/F** (el aviso "sin dato: N" del encabezado) y los días de
+   vacaciones ya tomados este año.
+2. **Confirmar dos decisiones que tomé sin preguntar:** (a) al **aprobar** vacaciones/licencia
+   el calendario se llena solo y reemplaza lo que hubiera ese día (no lo pidió expresamente);
+   (b) la **licencia cuenta días hábiles**, aunque legalmente una licencia médica va en días
+   corridos — preguntar si prefiere corridos.
+3. **Feriados públicos de Chile:** hoy no se descuentan de los días hábiles (un feriado dentro
+   de unas vacaciones no debería gastar feriado). Cargar la lista y usarla en
+   `businessDaysRange()`.
+4. **Ideas propuestas para el portal del trabajador** (el usuario aún no eligió): mis horas del
+   mes (legales/extra/total), avisos del administrador, tarjeta "próximo turno", mis datos
+   (teléfono y contacto de emergencia). Recomendé empezar por las horas del mes.
+5. **PDF de licencia en Firestore:** límite 3 MB y solo PDF, porque Storage no está en el plan
+   gratuito. Si pasa a Blaze, moverlo a Storage (`lib/attachments.ts`) y sacar el límite.
+6. Preguntar si quiere un PIN/login para "Soy administrador" (hoy entra cualquiera sin
+   contraseña) y revisar las reglas de Firestore (permisivas a propósito).
+7. ABM masivo de trabajadores e importación desde Excel/CSV; selector de rango personalizado;
+   superposición de chips en vista **Mes** (`table-layout: fixed`, desde sesión 2).
+8. El Resumen mensual evalúa las semanas con los datos que caen dentro del mes elegido: una
+   semana que cruza fin de mes se calcula por separado en cada resumen (simplificación aceptada).
+
+**Para quien retome — dos advertencias:**
+- Firestore es **una sola base compartida** entre `localhost` y el sitio real: cualquier prueba
+  escribe datos reales (turnos, solicitudes). Hay datos de prueba del usuario (Anita, etc.):
+  **no borrarlos**. Lo que uno cree para probar, borrarlo después (se hizo con el SDK de
+  Firestore desde la consola del navegador de pruebas).
+- El navegador de pruebas a veces salta solo a `localhost:5173` (página en blanco) o reinicia
+  el estado: es del entorno de prueba, no de la app. Volver a `http://localhost:5188`.
 
 **Pendientes de fondo (no bloquean, anotados para no olvidar):**
 - Definir si el registro de asistencia será "registro oficial" (estándar RCE de la Dirección
@@ -761,6 +799,60 @@ https://control-turnos-6b394.web.app apenas confirmado en local.
 
 **Confirmado en vivo por el usuario:** sí, en cada paso — el usuario fue guiando los ajustes
 en tiempo real mientras probaba la app desplegada.
+
+### Sesión 5 — 2026-09-18 / 19 (continuación de la Sesión 4)
+
+Trabajo guiado en tiempo real por el usuario, que probaba la app desplegada y pedía ajustes.
+Todo se verificó en el navegador antes de subir, se commiteó y se desplegó a Firebase Hosting
+en cada paso. Sin errores de consola en ningún punto.
+
+**Cuadro de lo hecho:**
+
+| Pedido del usuario | Qué se hizo | Commit |
+|---|---|---|
+| Al imprimir solo el horario normal, sin horas extra ni columna "Horas" (va a vitrina) | CSS de impresión oculta `.chip-extra`, `.chip-total`, la columna de horas y el aro de aviso | `a196cdb` |
+| Desplegable de sección en la cabecera del calendario, para trabajar o imprimir por sección | El filtro "Alcance" pasó de la barra superior a la cabecera; "Todos" pasa a llamarse "Completo" | `57bf15c` |
+| Elegir una o varias secciones con casillas | Componente `SectionFilter.tsx`; `scope` pasó de `string` a `string[]` | `e7db0ca` |
+| La sección elegida junto al título, nada si es "Completo" | "Calendario de Turnos · Sección: X" (sale al imprimir); libera la línea de fecha | `8e4707e` |
+| Vacaciones/licencia: fecha de inicio + cantidad de días, término automático en días hábiles y calendario rellenado | `businessDaysRange()`, `saveShiftRange()`; solo al crear una ausencia nueva | `3ec7385` |
+| Vacaciones naranja, Día libre verde claro | `lib/motivoColors.ts` compartido; antes calendario y portal tenían paletas distintas | `431495a` |
+| Resumen "M= 00 - F= 00, TOT= 00" en la cabecera | Campo `Worker.gender`; cuenta a los trabajadores visibles (respeta el filtro); aviso "sin dato: N" solo en pantalla | `8cb7155` |
+| Sexo con casillas M/F desde el formulario del trabajador | Casillas excluyentes (se pueden desmarcar) en vez de desplegable | `6fa3c64` |
+| "Día libre" con letras negras en negrilla | Clase `--dialibre` en calendario y portal | `e542dd9` |
+| Portal: desplegable de solicitudes (vacaciones, reunión, licencia con PDF, otro) | `NewRequestForm.tsx`, `lib/attachments.ts`, `lib/solicitudes.ts`; la bandeja del admin muestra los tipos, abre el PDF y al aprobar llena el calendario | `2aae477` |
+| "Al pinchar Solicitudes/Resumen/... el modal salta abajo" | Ver bug 1 más abajo | `a4c16e3` |
+| Feriado legal por trabajador que se va descontando en la solicitud | `lib/vacations.ts`, `FeriadoResumen.tsx`, campos nuevos en el formulario del trabajador, tarjeta "Mi feriado legal", saldo en la bandeja | `55dbca4` |
+
+**Bugs reales encontrados en el camino:**
+1. **Modales abajo de la pantalla con muchos trabajadores.** La animación de entrada de `.app`
+   y `.sheet` usaba `fill-mode: both`, que deja una `transform` permanente; un ancestro con
+   transform convierte a los hijos `position: fixed` (el fondo del modal) en relativos a ese
+   ancestro. Con 18 filas la página medía 2509 px y el modal se centraba fuera de la vista
+   (medido: fondo de 2509 px contra 682 px de pantalla). Arreglo: `fill-mode: backwards`.
+2. **Verificado contra la ley antes de dar por bueno:** la primera versión de la marca diaria
+   comparaba el bloque completo; el Art. 34 CT dice que la colación no es imputable a la
+   jornada, así que se compara en horas netas (ya estaba así en la Sesión 4).
+3. **Datos de prueba:** las pruebas que dejaron datos (solicitudes, PDF, turnos de enero-marzo
+   de 2027) se borraron con el SDK de Firestore y se comprobó que quedaran solo los del usuario.
+   Una prueba creó por error una solicitud real de 10 días (el bloqueo por saldo no aplicaba
+   en el período siguiente); se borró de inmediato.
+
+**Decisiones abiertas para que el usuario las confirme:** ver "▶ Para retomar", punto 2
+(llenado al aprobar y licencia en días hábiles) y punto 3 (feriados públicos).
+
+**Archivos nuevos:** `src/components/SectionFilter.tsx`, `NewRequestForm.tsx`,
+`FeriadoResumen.tsx`; `src/lib/motivoColors.ts`, `attachments.ts`, `solicitudes.ts`,
+`vacations.ts`.
+
+**Archivos modificados:** `src/AdminApp.tsx`, `App.css`, `types.ts`, `lib/dates.ts`,
+`components/CalendarGrid.tsx`, `ShiftForm.tsx`, `WorkerForm.tsx`, `WorkerPortal.tsx`,
+`RequestInbox.tsx`.
+
+**Commits:** `a196cdb` a `55dbca4` (12 commits), todos en `Maah1996/control-turnos`, rama `main`.
+
+**Confirmado en vivo por el usuario:** sí, paso a paso: cada ajuste salió de su prueba del sitio
+desplegado. Pendiente de confirmar: el portal de solicitudes y el feriado legal (recién
+desplegados al cierre).
 
 ---
 ---
