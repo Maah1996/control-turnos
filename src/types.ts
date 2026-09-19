@@ -53,7 +53,9 @@ export interface ScheduledShift {
 export type ViewMode = 'semana' | 'quincena' | 'mes';
 
 // Solicitud de cambio hecha por un trabajador desde su portal.
-export type SolicitudTipo = 'cambio_horario' | 'dia_libre' | 'reemplazo';
+export type SolicitudTipo =
+  | 'cambio_horario' | 'dia_libre' | 'reemplazo'
+  | 'vacaciones' | 'reunion' | 'licencia' | 'otro';
 export type SolicitudEstado = 'pendiente' | 'aprobada' | 'rechazada';
 
 export interface SolicitudCambio {
@@ -69,4 +71,10 @@ export interface SolicitudCambio {
   respuestaAdmin?: string;
   creadoEn: string; // ISO datetime
   resueltoEn?: string; // ISO datetime
+  // Vacaciones / licencia: `iso` es el inicio, `dias` son días hábiles y `hastaIso` el último día.
+  dias?: number;
+  hastaIso?: string;
+  hora?: string; // reunión con el gerente: "HH:mm"
+  // Licencia: el PDF se guarda en trozos en la colección `adjuntos` (ver lib/attachments.ts).
+  adjunto?: { nombre: string; tamano: number; trozos: number };
 }

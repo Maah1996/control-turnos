@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import type { ScheduledShift, SolicitudCambio, ViewMode, Worker } from './types';
 import {
-  addDays, eachDay, endOfMonth, fmtLong, fmtMonthYear,
+  addDays, businessDaysRange, eachDay, endOfMonth, fmtLong, fmtMonthYear,
   fromISO, isSameDay, startOfMonth, startOfWeek, toISO,
 } from './lib/dates';
 import { useFirestoreCollection, useFirestoreDoc } from './lib/firestoreSync';
 import { CalendarGrid } from './components/CalendarGrid';
 import { Modal } from './components/Modal';
 import { WorkerForm } from './components/WorkerForm';
-import { ShiftForm } from './components/ShiftForm';
+import { ShiftForm, MOTIVO_PREFIX } from './components/ShiftForm';
 import { AreaManager } from './components/AreaManager';
 import { WorkerManager } from './components/WorkerManager';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -244,21 +244,25 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
     setShiftModal(null);
   };
 
-  // Llenado por rango (Vacaciones/Licencia/etc.): reemplaza lo que hubiera ese día por
-  // cada fecha calculada (día hábil por día hábil) con la ausencia elegida.
-  const saveShiftRange = (data: { shiftTypeId: string; notes?: string }, dates: string[]) => {
-    if (!shiftModal) return;
-    const { workerId } = shiftModal;
+  // Llena el calendario de un trabajador con una ausencia, día por día: reemplaza lo que
+  // hubiera en cada fecha (Vacaciones, Licencia, etc.).
+  const fillAbsence = (workerId: string, dates: string[], shiftTypeId: string, notes?: string) => {
     for (const date of dates) {
       shifts
         .filter((s) => s.workerId === workerId && s.date === date && s.status !== 'anulado')
         .forEach((s) => shiftsSync.remove(s.id));
       shiftsSync.save({
         id: newShiftId(), workerId, date, status: 'publicado',
-        shiftTypeId: data.shiftTypeId, start: '00:00', end: '00:00', breakMinutes: 0,
-        ...(data.notes ? { notes: data.notes } : {}),
+        shiftTypeId, start: '00:00', end: '00:00', breakMinutes: 0,
+        ...(notes ? { notes } : {}),
       });
     }
+  };
+
+  // Llenado por rango desde el formulario de turno (fecha de inicio + días hábiles).
+  const saveShiftRange = (data: { shiftTypeId: string; notes?: string }, dates: string[]) => {
+    if (!shiftModal) return;
+    fillAbsence(shiftModal.workerId, dates, data.shiftTypeId, data.notes);
     setShiftModal(null);
   };
 
@@ -294,6 +298,13 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
   const resolverSolicitud = (id: string, estado: 'aprobada' | 'rechazada', respuestaAdmin?: string) => {
     const s = solicitudes.find((x) => x.id === id);
     if (!s) return;
+    // Vacaciones y licencia aprobadas: el calendario se completa solo con los días hábiles pedidos.
+    if (estado === 'aprobada' && (s.tipo === 'vacaciones' || s.tipo === 'licencia') && s.dias) {
+      const nombre = s.tipo === 'vacaciones' ? 'Vacaciones' : 'Licencia médica';
+      if (!motivos.includes(nombre)) addMotivo(nombre);
+      const fechas = businessDaysRange(fromISO(s.iso), s.dias).map(toISO);
+      fillAbsence(s.workerId, fechas, MOTIVO_PREFIX + nombre, nombre);
+    }
     solicitudesSync.save({
       ...s,
       estado,

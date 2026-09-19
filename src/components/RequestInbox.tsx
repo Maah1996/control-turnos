@@ -1,17 +1,12 @@
 import { useMemo, useState } from 'react';
 import type { SolicitudCambio, SolicitudEstado } from '../types';
-import { fmtLong, fromISO } from '../lib/dates';
+import { TIPO_LABEL, fechasTexto } from '../lib/solicitudes';
+import { abrirAdjunto } from '../lib/attachments';
 
 interface Props {
   solicitudes: SolicitudCambio[];
   onResolver: (id: string, estado: 'aprobada' | 'rechazada', respuestaAdmin?: string) => void;
 }
-
-const TIPO_LABEL: Record<string, string> = {
-  cambio_horario: 'Cambio de horario',
-  dia_libre: 'Día libre',
-  reemplazo: 'Reemplazo con compañero',
-};
 
 const ESTADO_LABEL: Record<SolicitudEstado, string> = {
   pendiente: 'Pendiente',
@@ -22,6 +17,13 @@ const ESTADO_LABEL: Record<SolicitudEstado, string> = {
 export function RequestInbox({ solicitudes, onResolver }: Props) {
   const [filtro, setFiltro] = useState<SolicitudEstado | 'todas'>('pendiente');
   const [respuestas, setRespuestas] = useState<Record<string, string>>({});
+  const [errorAdjunto, setErrorAdjunto] = useState('');
+
+  const verAdjunto = (s: SolicitudCambio) => {
+    if (!s.adjunto) return;
+    setErrorAdjunto('');
+    abrirAdjunto(s.id, s.adjunto).catch(() => setErrorAdjunto('No se pudo abrir el PDF. Inténtalo de nuevo.'));
+  };
 
   const ordenadas = useMemo(
     () => [...solicitudes].sort((a, b) => b.creadoEn.localeCompare(a.creadoEn)),
@@ -58,6 +60,8 @@ export function RequestInbox({ solicitudes, onResolver }: Props) {
         <p className="empty-state">No hay solicitudes {filtro === 'todas' ? '' : `en estado "${ESTADO_LABEL[filtro as SolicitudEstado].toLowerCase()}"`} por ahora.</p>
       )}
 
+      {errorAdjunto && <p className="form-error">{errorAdjunto}</p>}
+
       <ul className="inbox-list">
         {filtradas.map((s) => (
           <li key={s.id} className={'inbox-item inbox-item--' + s.estado}>
@@ -69,10 +73,15 @@ export function RequestInbox({ solicitudes, onResolver }: Props) {
               <span className={'inbox-pill inbox-pill--' + s.estado}>{ESTADO_LABEL[s.estado]}</span>
             </div>
             <p className="inbox-item-meta">
-              {fmtLong(fromISO(s.iso))}
+              {fechasTexto(s)}
               {s.tipo === 'reemplazo' && s.reemplazoWorkerName ? ` · con ${s.reemplazoWorkerName}` : ''}
             </p>
-            <p className="inbox-item-motivo">"{s.motivo}"</p>
+            {s.motivo && <p className="inbox-item-motivo">"{s.motivo}"</p>}
+            {s.adjunto && (
+              <button type="button" className="ghost sm inbox-adjunto" onClick={() => verAdjunto(s)}>
+                Ver PDF de la licencia ({s.adjunto.nombre})
+              </button>
+            )}
 
             {s.estado === 'pendiente' ? (
               <div className="inbox-item-actions">
@@ -98,7 +107,9 @@ export function RequestInbox({ solicitudes, onResolver }: Props) {
                   </button>
                 </div>
                 <p className="inbox-item-hint">
-                  Aprobar no cambia el calendario solo — recuerda reflejar el cambio en la planilla si corresponde.
+                  {s.tipo === 'vacaciones' || s.tipo === 'licencia'
+                    ? `Al aprobar, el calendario se completa solo con "${s.tipo === 'vacaciones' ? 'Vacaciones' : 'Licencia médica'}" en esos días hábiles (reemplaza lo que hubiera).`
+                    : 'Aprobar no cambia el calendario solo — recuerda reflejar el cambio en la planilla si corresponde.'}
                 </p>
               </div>
             ) : (

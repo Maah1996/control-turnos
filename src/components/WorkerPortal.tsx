@@ -6,7 +6,9 @@ import {
 import { useFirestoreCollection } from '../lib/firestoreSync';
 import { WORKERS, buildMockShifts } from '../data/mock';
 import { motivoColor } from '../lib/motivoColors';
+import { TIPO_LABEL, fechasTexto } from '../lib/solicitudes';
 import { MOTIVO_PREFIX } from './ShiftForm';
+import { NewRequestForm } from './NewRequestForm';
 
 const TIPO_OPTIONS: { value: SolicitudTipo; label: string }[] = [
   { value: 'cambio_horario', label: 'Cambiar el horario de ese día' },
@@ -201,19 +203,25 @@ export function WorkerPortal({ onSalir }: Props) {
 
       {tab === 'solicitudes' && (
         <section className="portal-solicitudes">
+          <NewRequestForm worker={worker} onCrear={(sol) => solicitudesSync.save(sol)} />
+
           {misSolicitudes.length === 0 && (
-            <p className="empty-state">Todavía no has hecho ninguna solicitud. Ve a "Mi horario" y toca "Pedir cambio" en el día que necesites.</p>
+            <p className="empty-state">Todavía no has hecho ninguna solicitud. Elige una arriba, o ve a "Mi horario" y toca "Pedir cambio" en el día que necesites.</p>
           )}
           <ul className="inbox-list">
             {misSolicitudes.map((s) => (
               <li key={s.id} className={'inbox-item inbox-item--' + s.estado}>
                 <div className="inbox-item-head">
-                  <strong>{fmtLong(new Date(s.iso + 'T00:00:00'))}</strong>
+                  <div>
+                    <strong>{TIPO_LABEL[s.tipo] ?? s.tipo}</strong>
+                    {fechasTexto(s) && <span className="inbox-item-tipo">{fechasTexto(s)}</span>}
+                  </div>
                   <span className={'inbox-pill inbox-pill--' + s.estado}>
                     {s.estado === 'pendiente' ? 'Pendiente' : s.estado === 'aprobada' ? 'Aprobada' : 'Rechazada'}
                   </span>
                 </div>
-                <p className="inbox-item-motivo">"{s.motivo}"</p>
+                {s.motivo && <p className="inbox-item-motivo">"{s.motivo}"</p>}
+                {s.adjunto && <p className="inbox-item-meta">PDF adjunto: {s.adjunto.nombre}</p>}
                 {s.respuestaAdmin && <p className="inbox-item-respuesta">Respuesta: "{s.respuestaAdmin}"</p>}
               </li>
             ))}
