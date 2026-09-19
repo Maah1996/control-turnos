@@ -430,6 +430,9 @@ body {
 
 .chip-motivo { font-size: 12px; font-weight: 700; color: var(--chip); }
 
+/* "Día libre": letras negras en negrilla (el verde claro queda solo como fondo y borde) */
+.chip-motivo.chip-motivo--dialibre, .portal-day-chip.portal-day-chip--dialibre { color: #000; font-weight: 800; }
+
 .grid td.total { text-align: center; font-weight: 700; color: var(--color-foreground); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
 .total-hours-row { display: flex; align-items: baseline; justify-content: center; gap: 5px; }

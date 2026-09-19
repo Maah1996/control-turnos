@@ -159,7 +159,9 @@ export function CalendarGrid({
                           onClick={(e) => { e.stopPropagation(); onShiftClick?.(s); }}
                         >
                           {isMotivo ? (
-                            <span className="chip-motivo">{t?.name}</span>
+                            <span className={'chip-motivo' + (t?.name === 'Día libre' ? ' chip-motivo--dialibre' : '')}>
+                              {t?.name}
+                            </span>
                           ) : (
                             <>
                               <span className="chip-code">{t?.code}</span>

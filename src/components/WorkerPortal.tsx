@@ -178,7 +178,7 @@ export function WorkerPortal({ onSalir }: Props) {
                   {turno ? (
                     isMotivo ? (
                       <span
-                        className="portal-day-chip"
+                        className={'portal-day-chip' + (motivoName === 'Día libre' ? ' portal-day-chip--dialibre' : '')}
                         style={{ ['--chip' as string]: motivoColor(motivoName ?? '') }}
                       >
                         {motivoName === 'Día libre' ? 'DÍA LIBRE' : motivoName}
