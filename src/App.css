@@ -1098,3 +1098,27 @@ body {
 .new-request-ok { color: var(--color-accent); font-weight: 600; background: var(--color-accent-soft); }
 
 .inbox-adjunto { align-self: flex-start; }
+
+/* ---------- Feriado legal (vacaciones) ---------- */
+.feriado { display: flex; flex-direction: column; gap: var(--space-2); }
+.feriado-stats { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.feriado-stat {
+  flex: 1; min-width: 74px; display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 8px 10px; background: var(--color-muted); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+}
+.feriado-stat strong { font-family: var(--font-mono); font-size: 18px; font-weight: 800; color: var(--color-foreground); }
+.feriado-stat span { font-size: 10.5px; font-weight: 600; color: var(--color-muted-foreground); text-transform: uppercase; letter-spacing: .03em; }
+.feriado-stat--main { background: var(--color-accent-soft); border-color: color-mix(in srgb, var(--color-accent) 40%, transparent); }
+.feriado-stat--main strong { color: var(--color-accent); }
+.feriado-stat--result { background: color-mix(in srgb, var(--color-info) 10%, #fff); border-color: color-mix(in srgb, var(--color-info) 40%, transparent); }
+.feriado-stat--result strong { color: var(--color-info); }
+.feriado-stat--neg strong { color: var(--color-destructive); }
+.feriado-note { margin: 0; font-size: 11.5px; color: var(--color-muted-foreground); }
+
+.portal-feriado {
+  background: var(--color-card); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  padding: var(--space-4); box-shadow: var(--shadow-1);
+}
+.portal-feriado h3 { margin: 0 0 var(--space-3); font-size: 14px; font-weight: 800; }
+
+.form-field input:disabled { background: var(--color-muted); color: var(--color-foreground); opacity: 1; font-weight: 700; }

@@ -437,6 +437,8 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
         >
           <WorkerForm
             initial={workerModal.mode === 'edit' ? workerModal.worker : undefined}
+            shifts={shifts}
+            solicitudes={solicitudes}
             areas={areas}
             onSave={saveWorker}
             onDelete={workerModal.mode === 'edit'
@@ -497,6 +499,8 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
         <Modal title="Solicitudes de los trabajadores" onClose={() => setInboxOpen(false)}>
           <RequestInbox
             solicitudes={solicitudes}
+            workers={workers}
+            shifts={shifts}
             onResolver={resolverSolicitud}
           />
         </Modal>

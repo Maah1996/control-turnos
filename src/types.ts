@@ -23,6 +23,9 @@ export interface Worker {
   color: string; // color en la planilla
   code?: string; // código de acceso al portal del trabajador (4-6 dígitos)
   gender?: 'M' | 'F'; // para el resumen de dotación (M / F / total) del encabezado
+  // Feriado legal (Art. 67-68 Código del Trabajo). La fecha de ingreso es `hireDate`.
+  priorYears?: number; // años trabajados con otros empleadores (cuentan hasta 10 para el feriado progresivo)
+  vacationTaken?: number; // días hábiles ya tomados en el período actual antes de usar el sistema
 }
 
 export interface ShiftType {

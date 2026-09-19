@@ -1,10 +1,15 @@
 import { useMemo, useState } from 'react';
-import type { SolicitudCambio, SolicitudEstado } from '../types';
+import type { ScheduledShift, SolicitudCambio, SolicitudEstado, Worker } from '../types';
 import { TIPO_LABEL, fechasTexto } from '../lib/solicitudes';
 import { abrirAdjunto } from '../lib/attachments';
+import { calcularFeriado } from '../lib/vacations';
+import { fromISO } from '../lib/dates';
+import { FeriadoResumen } from './FeriadoResumen';
 
 interface Props {
   solicitudes: SolicitudCambio[];
+  workers: Worker[];
+  shifts: ScheduledShift[];
   onResolver: (id: string, estado: 'aprobada' | 'rechazada', respuestaAdmin?: string) => void;
 }
 
@@ -14,7 +19,7 @@ const ESTADO_LABEL: Record<SolicitudEstado, string> = {
   rechazada: 'Rechazada',
 };
 
-export function RequestInbox({ solicitudes, onResolver }: Props) {
+export function RequestInbox({ solicitudes, workers, shifts, onResolver }: Props) {
   const [filtro, setFiltro] = useState<SolicitudEstado | 'todas'>('pendiente');
   const [respuestas, setRespuestas] = useState<Record<string, string>>({});
   const [errorAdjunto, setErrorAdjunto] = useState('');
@@ -77,6 +82,12 @@ export function RequestInbox({ solicitudes, onResolver }: Props) {
               {s.tipo === 'reemplazo' && s.reemplazoWorkerName ? ` · con ${s.reemplazoWorkerName}` : ''}
             </p>
             {s.motivo && <p className="inbox-item-motivo">"{s.motivo}"</p>}
+            {s.tipo === 'vacaciones' && s.estado === 'pendiente' && (() => {
+              const trabajador = workers.find((w) => w.id === s.workerId);
+              return trabajador
+                ? <FeriadoResumen info={calcularFeriado(trabajador, shifts, solicitudes, fromISO(s.iso), s.id)} usando={s.dias ?? 0} />
+                : null;
+            })()}
             {s.adjunto && (
               <button type="button" className="ghost sm inbox-adjunto" onClick={() => verAdjunto(s)}>
                 Ver PDF de la licencia ({s.adjunto.nombre})

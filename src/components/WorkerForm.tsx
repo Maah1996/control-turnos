@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import type { ContractType, Worker, WorkerStatus } from '../types';
+import type { ContractType, ScheduledShift, SolicitudCambio, Worker, WorkerStatus } from '../types';
+import { toISO } from '../lib/dates';
+import { calcularFeriado } from '../lib/vacations';
+import { FeriadoResumen } from './FeriadoResumen';
 
 interface Props {
   initial?: Worker;
+  shifts?: ScheduledShift[];
+  solicitudes?: SolicitudCambio[];
   areas: string[];
   onSave: (worker: Worker) => void;
   onDelete?: () => void;
@@ -31,7 +36,7 @@ function newId() {
   return `w-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
-export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props) {
+export function WorkerForm({ initial, shifts = [], solicitudes = [], areas, onSave, onDelete, onClose }: Props) {
   const [fullName, setFullName] = useState(initial?.fullName ?? '');
   const [rut, setRut] = useState(initial?.rut ?? '');
   const [position, setPosition] = useState(initial?.position ?? '');
@@ -42,7 +47,20 @@ export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props)
   const [color, setColor] = useState(initial?.color ?? PALETTE[0]);
   const [code, setCode] = useState(initial?.code ?? '');
   const [gender, setGender] = useState<'M' | 'F' | ''>(initial?.gender ?? '');
+  const [hireDate, setHireDate] = useState(initial?.hireDate ?? toISO(new Date()));
+  const [priorYears, setPriorYears] = useState(initial?.priorYears ?? 0);
+  const [vacationTaken, setVacationTaken] = useState(initial?.vacationTaken ?? 0);
   const [error, setError] = useState('');
+
+  // Feriado legal en vivo: cambia al editar la fecha de ingreso, los años previos o los días tomados.
+  const feriado = useMemo(
+    () => calcularFeriado(
+      { id: initial?.id ?? '__nuevo__', hireDate, priorYears, vacationTaken },
+      shifts,
+      solicitudes,
+    ),
+    [initial?.id, hireDate, priorYears, vacationTaken, shifts, solicitudes],
+  );
 
   const randomCode = () => String(Math.floor(1000 + Math.random() * 9000));
 
@@ -60,12 +78,14 @@ export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props)
       area: area.trim(),
       contractType,
       weeklyHours: Number(weeklyHours) || 0,
-      hireDate: initial?.hireDate ?? new Date().toISOString().slice(0, 10),
+      hireDate: hireDate || initial?.hireDate || toISO(new Date()),
       status,
       color,
       // Firestore rechaza `undefined` en un campo: solo se incluye si hay código.
       ...(code.trim() ? { code: code.trim() } : {}),
       ...(gender ? { gender } : {}),
+      ...(priorYears > 0 ? { priorYears: Math.min(10, Math.floor(priorYears)) } : {}),
+      ...(vacationTaken > 0 ? { vacationTaken: Math.floor(vacationTaken) } : {}),
     });
   };
 
@@ -138,6 +158,35 @@ export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props)
           </select>
         </label>
       </div>
+
+      <div className="form-row">
+        <label className="form-field">
+          <span>Fecha de ingreso</span>
+          <input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} />
+        </label>
+        <label className="form-field">
+          <span>Años con otros empleadores</span>
+          <input
+            type="number" min={0} max={60} value={priorYears}
+            onChange={(e) => setPriorYears(Number(e.target.value))}
+          />
+        </label>
+      </div>
+
+      <div className="form-row">
+        <label className="form-field">
+          <span>Días ya tomados antes del sistema</span>
+          <input
+            type="number" min={0} max={60} value={vacationTaken}
+            onChange={(e) => setVacationTaken(Number(e.target.value))}
+          />
+        </label>
+        <div className="form-field">
+          <span>Vacaciones disponibles</span>
+          <input value={`${feriado.disponibles} de ${feriado.anual} días hábiles`} readOnly disabled />
+        </div>
+      </div>
+      <FeriadoResumen info={feriado} />
 
       <div className="form-row">
         <label className="form-field">

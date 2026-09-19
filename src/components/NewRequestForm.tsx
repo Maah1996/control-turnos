@@ -1,13 +1,17 @@
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import type { SolicitudCambio, Worker } from '../types';
+import type { ScheduledShift, SolicitudCambio, Worker } from '../types';
 import { businessDaysRange, fmtLong, fromISO, toISO } from '../lib/dates';
 import { MAX_ADJUNTO_BYTES, guardarAdjunto } from '../lib/attachments';
+import { calcularFeriado } from '../lib/vacations';
+import { FeriadoResumen } from './FeriadoResumen';
 
 type NuevaTipo = '' | 'vacaciones' | 'reunion' | 'licencia' | 'otro';
 
 interface Props {
   worker: Worker;
+  shifts: ScheduledShift[];
+  solicitudes: SolicitudCambio[];
   onCrear: (solicitud: SolicitudCambio) => void;
 }
 
@@ -22,7 +26,7 @@ function newId() {
   return `sol-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
-export function NewRequestForm({ worker, onCrear }: Props) {
+export function NewRequestForm({ worker, shifts, solicitudes, onCrear }: Props) {
   const hoy = toISO(new Date());
   const [tipo, setTipo] = useState<NuevaTipo>('');
   const [desde, setDesde] = useState(hoy);
@@ -41,6 +45,12 @@ export function NewRequestForm({ worker, onCrear }: Props) {
     [conRango, desde, dias],
   );
   const hasta = fechas[fechas.length - 1];
+
+  // Feriado legal del período en que cae el inicio de las vacaciones pedidas.
+  const feriado = useMemo(
+    () => (tipo === 'vacaciones' && desde ? calcularFeriado(worker, shifts, solicitudes, fromISO(desde)) : null),
+    [tipo, desde, worker, shifts, solicitudes],
+  );
 
   const elegirTipo = (value: NuevaTipo) => {
     setTipo(value);
@@ -66,6 +76,10 @@ export function NewRequestForm({ worker, onCrear }: Props) {
     e.preventDefault();
     if (!tipo) return;
     if (conRango && (!desde || fechas.length === 0)) { setError('Indica la fecha de inicio y los días.'); return; }
+    if (tipo === 'vacaciones' && feriado && fechas.length > feriado.disponibles) {
+      setError(`Pides ${fechas.length} días hábiles y solo te quedan ${Math.max(0, feriado.disponibles)} de feriado legal. Ajusta los días o habla con el administrador.`);
+      return;
+    }
     if (tipo === 'reunion' && (!fechaReunion || !hora)) { setError('Indica la fecha y la hora que te acomodan.'); return; }
     if (tipo === 'otro' && !texto.trim()) { setError('Escribe lo que necesitas.'); return; }
 
@@ -125,6 +139,7 @@ export function NewRequestForm({ worker, onCrear }: Props) {
               <input type="number" min={1} max={90} value={dias} onChange={(e) => setDias(Number(e.target.value))} />
             </label>
           </div>
+          {tipo === 'vacaciones' && feriado && <FeriadoResumen info={feriado} usando={fechas.length} />}
           {hasta && (
             <p className="form-context">
               Terminas el <strong>{fmtLong(hasta)}</strong> ({fechas.length} {fechas.length === 1 ? 'día hábil' : 'días hábiles'};

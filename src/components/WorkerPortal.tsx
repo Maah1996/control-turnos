@@ -8,6 +8,8 @@ import { WORKERS, buildMockShifts } from '../data/mock';
 import { motivoColor } from '../lib/motivoColors';
 import { TIPO_LABEL, fechasTexto } from '../lib/solicitudes';
 import { MOTIVO_PREFIX } from './ShiftForm';
+import { calcularFeriado } from '../lib/vacations';
+import { FeriadoResumen } from './FeriadoResumen';
 import { NewRequestForm } from './NewRequestForm';
 
 const TIPO_OPTIONS: { value: SolicitudTipo; label: string }[] = [
@@ -203,7 +205,17 @@ export function WorkerPortal({ onSalir }: Props) {
 
       {tab === 'solicitudes' && (
         <section className="portal-solicitudes">
-          <NewRequestForm worker={worker} onCrear={(sol) => solicitudesSync.save(sol)} />
+          <div className="portal-feriado">
+            <h3>Mi feriado legal</h3>
+            <FeriadoResumen info={calcularFeriado(worker, shiftsSync.items, solicitudesSync.items)} />
+          </div>
+
+          <NewRequestForm
+            worker={worker}
+            shifts={shiftsSync.items}
+            solicitudes={solicitudesSync.items}
+            onCrear={(sol) => solicitudesSync.save(sol)}
+          />
 
           {misSolicitudes.length === 0 && (
             <p className="empty-state">Todavía no has hecho ninguna solicitud. Elige una arriba, o ve a "Mi horario" y toca "Pedir cambio" en el día que necesites.</p>
