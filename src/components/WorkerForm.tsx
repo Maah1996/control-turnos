@@ -100,14 +100,21 @@ export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props)
           <span>RUT</span>
           <input value={rut} onChange={(e) => setRut(e.target.value)} placeholder="12.345.678-9" />
         </label>
-        <label className="form-field">
-          <span>Sexo</span>
-          <select value={gender} onChange={(e) => setGender(e.target.value as 'M' | 'F' | '')}>
-            <option value="">Sin definir</option>
-            <option value="M">Masculino (M)</option>
-            <option value="F">Femenino (F)</option>
-          </select>
-        </label>
+        <div className="form-field">
+          <span>Sexo (para la dotación)</span>
+          <div className="gender-options">
+            {(['M', 'F'] as const).map((g) => (
+              <label key={g} className={'gender-option' + (gender === g ? ' checked' : '')}>
+                <input
+                  type="checkbox"
+                  checked={gender === g}
+                  onChange={() => setGender(gender === g ? '' : g)}
+                />
+                {g === 'M' ? 'M' : 'F'}
+              </label>
+            ))}
+          </div>
+        </div>
         <label className="form-field">
           <span>Horas semanales</span>
           <input
