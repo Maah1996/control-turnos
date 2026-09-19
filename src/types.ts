@@ -22,6 +22,7 @@ export interface Worker {
   status: WorkerStatus;
   color: string; // color en la planilla
   code?: string; // código de acceso al portal del trabajador (4-6 dígitos)
+  gender?: 'M' | 'F'; // para el resumen de dotación (M / F / total) del encabezado
 }
 
 export interface ShiftType {

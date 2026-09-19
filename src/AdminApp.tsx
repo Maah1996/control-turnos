@@ -32,6 +32,8 @@ function newShiftId() {
   return `sh-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
 export default function AdminApp({ onSalir }: { onSalir: () => void }) {
   const [view, setView] = useState<ViewMode>('semana');
   const [anchor, setAnchor] = useState<Date>(new Date());
@@ -144,6 +146,19 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
   }, [visibleWorkers, rowOverrides, extraRows, workers]);
 
   useEffect(() => { setRowOverrides({}); setExtraRows([]); }, [scope]);
+
+  // Dotación de los trabajadores que se ven en el calendario (respeta el filtro de sección);
+  // cada persona cuenta una sola vez aunque aparezca en más de una fila.
+  const headcount = useMemo(() => {
+    const unique = new Map(displayedWorkers.map((w) => [w.id, w]));
+    let m = 0;
+    let f = 0;
+    for (const w of unique.values()) {
+      if (w.gender === 'M') m += 1;
+      else if (w.gender === 'F') f += 1;
+    }
+    return { m, f, total: unique.size, sinDato: unique.size - m - f };
+  }, [displayedWorkers]);
 
   const addExtraRow = () => {
     if (allWorkersSorted.length === 0) return;
@@ -347,6 +362,20 @@ export default function AdminApp({ onSalir }: { onSalir: () => void }) {
               {scope.length > 0 && <span className="h2-scope"> · Sección: {scope.join(', ')}</span>}
             </h2>
             <p className="period">{periodLabel}</p>
+          </div>
+          <div
+            className="headcount"
+            title="Dotación de los trabajadores del calendario: M = masculino, F = femenino"
+          >
+            <span>M= {pad2(headcount.m)} - F= {pad2(headcount.f)}, TOT= {pad2(headcount.total)}</span>
+            {headcount.sinDato > 0 && (
+              <span
+                className="headcount-missing no-print"
+                title="Trabajadores sin sexo asignado: se define en Trabajadores → editar"
+              >
+                sin dato: {headcount.sinDato}
+              </span>
+            )}
           </div>
           <div className="sheet-head-right">
             <label className="field no-print">

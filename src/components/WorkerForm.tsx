@@ -41,6 +41,7 @@ export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props)
   const [status, setStatus] = useState<WorkerStatus>(initial?.status ?? 'activo');
   const [color, setColor] = useState(initial?.color ?? PALETTE[0]);
   const [code, setCode] = useState(initial?.code ?? '');
+  const [gender, setGender] = useState<'M' | 'F' | ''>(initial?.gender ?? '');
   const [error, setError] = useState('');
 
   const randomCode = () => String(Math.floor(1000 + Math.random() * 9000));
@@ -64,6 +65,7 @@ export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props)
       color,
       // Firestore rechaza `undefined` en un campo: solo se incluye si hay código.
       ...(code.trim() ? { code: code.trim() } : {}),
+      ...(gender ? { gender } : {}),
     });
   };
 
@@ -97,6 +99,14 @@ export function WorkerForm({ initial, areas, onSave, onDelete, onClose }: Props)
         <label className="form-field">
           <span>RUT</span>
           <input value={rut} onChange={(e) => setRut(e.target.value)} placeholder="12.345.678-9" />
+        </label>
+        <label className="form-field">
+          <span>Sexo</span>
+          <select value={gender} onChange={(e) => setGender(e.target.value as 'M' | 'F' | '')}>
+            <option value="">Sin definir</option>
+            <option value="M">Masculino (M)</option>
+            <option value="F">Femenino (F)</option>
+          </select>
         </label>
         <label className="form-field">
           <span>Horas semanales</span>
