@@ -73,7 +73,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.app { max-width: 1600px; margin: 0 auto; padding: var(--space-5); animation: app-in .4s var(--transition) both; }
+/* `backwards` (no `both`): con `both` la animación deja una transform permanente, y eso hace que
+   los modales (position: fixed) se ubiquen respecto de toda la página y no de la pantalla —
+   con muchos trabajadores el modal quedaba centrado varios cientos de px más abajo. */
+.app { max-width: 1600px; margin: 0 auto; padding: var(--space-5); animation: app-in .4s var(--transition) backwards; }
 
 @keyframes app-in {
   from { opacity: 0; transform: translateY(6px); }
@@ -191,7 +194,7 @@ body {
 .sheet {
   background: var(--color-card); border-radius: var(--radius);
   box-shadow: var(--shadow); overflow: hidden;
-  animation: app-in .5s var(--transition) both; animation-delay: .05s;
+  animation: app-in .5s var(--transition) backwards; animation-delay: .05s;
 }
 
 .sheet-head {
